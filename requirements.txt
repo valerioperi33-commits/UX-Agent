@@ -1,0 +1,27 @@
+# Dipendenze del progetto "agente-ux"
+# ------------------------------------
+# Come installarle (dopo aver attivato il venv):
+#   source venv/bin/activate
+#   pip install -r requirements.txt
+#
+# Usiamo vincoli ">=" (versione minima) invece di versioni fisse:
+# così il progetto si installa anche se i due Mac hanno versioni di
+# Python leggermente diverse. Per uno "scatto" esatto e riproducibile
+# potete sempre fare:  pip freeze > requirements.txt
+
+# --- Comunicazione col modello locale (Ollama) ---
+ollama>=0.4.0          # client Python per parlare col modello vision via Ollama
+
+# --- Configurazione e prompt ---
+python-dotenv>=1.0.0   # legge le impostazioni dal file .env
+pyyaml>=6.0            # legge il system prompt da prompts.yaml
+
+# --- Lettura immagini ed estrazione colori ---
+Pillow>=10.0.0         # apre gli screenshot e legge i pixel
+numpy>=1.26.0          # calcoli sui colori (palette dominante, separazione testo/sfondo)
+
+# --- OCR: riconoscimento del testo negli screenshot ---
+# NB: per l'OCR NON serve una libreria Python: chiamiamo direttamente il programma
+# di sistema Tesseract (vedi tools/ocr.py). Va installato a parte con Homebrew:
+#     brew install tesseract              (motore + lingua inglese)
+#     brew install tesseract-lang         (opzionale: aggiunge l'italiano e altre lingue)

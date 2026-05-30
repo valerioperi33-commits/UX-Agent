@@ -1,0 +1,17 @@
+# --- Ambiente Python (ricreabile con requirements.txt, NON va versionato) ---
+venv/
+__pycache__/
+*.pyc
+
+# --- Configurazione locale: diversa su ogni Mac (modello, percorsi) ---
+.env
+
+# --- Screenshot e report: dati di lavoro, non codice ---
+# Teniamo la cartella 'screens/' ma non le immagini dentro (privacy/peso).
+screens/*
+!screens/.gitkeep
+report.md
+report.json
+
+# --- File di sistema macOS ---
+.DS_Store
