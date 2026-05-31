@@ -1,30 +1,27 @@
 """
 app.py — Interfaccia grafica (piccola app web locale) per l'agente.
 
-IMPORTANTE: NON cambia l'analisi. Usa ESATTAMENTE la stessa logica del terminale,
-cioe' la funzione `analizza_screenshot` di agent.py (stesso cervello + stesse mani
-+ stesso sistema nervoso). Qui aggiungiamo solo una pagina con il drag-and-drop e
-una visualizzazione grafica del report.
+NON cambia l'analisi: usa le stesse funzioni del terminale (analizza_screenshot,
+confronta_progetti). Aggiunge solo le pagine e organizza tutto in tre schede:
+  - Nuova analisi  (drag-and-drop + nome progetto)
+  - Progetti fatti (si aggiorna a ogni analisi; ogni progetto è salvato in progetti/)
+  - Confronta      (sceglie due progetti e li mette a confronto)
 
 Gira in locale su 127.0.0.1: nessun dato esce dal computer.
 
-Avvio:
-  source venv/bin/activate
-  python app.py
-Poi si apre il browser su  http://127.0.0.1:5000
-(per non aprirlo in automatico:  python app.py --no-browser)
+Avvio:  python app.py     (poi si apre il browser; per non aprirlo: --no-browser)
 """
 import sys
 import threading
 import webbrowser
 
-from flask import Flask, render_template, request, send_from_directory
+from flask import Flask, render_template, request, send_from_directory, jsonify, abort
 
 import config
-from agent import analizza_screenshot, verifica_modello, scalda_modello
+import progetti
+from agent import analizza_screenshot, verifica_modello, scalda_modello, confronta_progetti
 
-# Cartella dove salviamo le immagini caricate dal browser.
-# La teniamo separata da screens/ (che resta la "casella" per l'uso da terminale).
+# Cartella temporanea per il file appena caricato (poi viene copiato nel progetto).
 CARTELLA_UPLOAD = config.RADICE / "uploads"
 CARTELLA_UPLOAD.mkdir(exist_ok=True)
 
@@ -35,36 +32,79 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    """Pagina iniziale: il riquadro per il drag-and-drop."""
-    ok, messaggio = verifica_modello()      # avvisa subito se Ollama/modello non sono pronti
+    """Pagina con le tre schede."""
+    ok, messaggio = verifica_modello()        # avvisa se Ollama/modello non sono pronti
     return render_template("index.html", ambiente_ok=ok, messaggio_ambiente=messaggio)
 
 
 @app.route("/analizza", methods=["POST"])
 def analizza():
-    """Riceve l'immagine, la analizza con lo STESSO agente e rende il report in HTML."""
+    """Riceve immagine + nome progetto, analizza (stessa logica del terminale) e salva."""
     file = request.files.get("immagine")
+    nome = (request.form.get("nome_progetto") or "").strip()
+    if not nome:
+        return "Dai un nome al progetto prima di analizzare.", 400
     if not file or not file.filename:
         return "Nessun file ricevuto.", 400
 
-    # Salviamo nella cartella del progetto (cosi' anche Tesseract la legge senza problemi).
-    nome = _nome_sicuro(file.filename)
-    file.save(CARTELLA_UPLOAD / nome)
+    temp = CARTELLA_UPLOAD / _nome_sicuro(file.filename)
+    file.save(temp)
+    try:
+        risultato = analizza_screenshot(temp)            # <- stessa identica analisi
+        progetto = progetti.salva_progetto(nome, temp, risultato)
+    finally:
+        temp.unlink(missing_ok=True)                     # ripulisce il file temporaneo
 
-    risultato = analizza_screenshot(CARTELLA_UPLOAD / nome)   # <- stessa identica analisi
-    return render_template("risultato.html", r=risultato, nome=nome)
+    return render_template("risultato.html", r=risultato, nome=progetto["nome"],
+                           data=progetto["data"], img_url=f"/immagine/{progetto['slug']}")
 
 
-@app.route("/uploads/<path:nome>")
-def immagine_caricata(nome):
-    """Serve l'immagine caricata, per mostrarne l'anteprima nel report."""
-    return send_from_directory(CARTELLA_UPLOAD, nome)
+@app.route("/api/progetti")
+def api_progetti():
+    """Elenco dei progetti salvati (per le schede 'Progetti fatti' e 'Confronta')."""
+    elenco = [{
+        "slug": p["slug"], "nome": p["nome"], "data": p["data"],
+        "img_url": f"/immagine/{p['slug']}",
+        "contrasto": progetti.riepilogo_contrasto(p["risultato"]),
+    } for p in progetti.elenco_progetti()]
+    return jsonify(elenco)
+
+
+@app.route("/progetto/<slug>")
+def vedi_progetto(slug):
+    """Rivede il report di un progetto salvato."""
+    p = progetti.carica_progetto(slug)
+    if not p:
+        abort(404)
+    return render_template("risultato.html", r=p["risultato"], nome=p["nome"],
+                           data=p["data"], img_url=f"/immagine/{slug}")
+
+
+@app.route("/confronta", methods=["POST"])
+def confronta():
+    """Confronta due progetti scelti dall'utente."""
+    a, b = request.form.get("a"), request.form.get("b")
+    if not a or not b or a == b:
+        return "Scegli due progetti diversi.", 400
+    try:
+        risultato = confronta_progetti(a, b)
+    except Exception as errore:
+        return f"Non riesco a confrontare: {errore}", 400
+    return render_template("confronto.html", c=risultato)
+
+
+@app.route("/immagine/<slug>")
+def immagine(slug):
+    """Serve l'immagine salvata di un progetto (per anteprime e report)."""
+    p = progetti.carica_progetto(slug)
+    if not p:
+        abort(404)
+    return send_from_directory(progetti.CARTELLA_PROGETTI / slug, p["immagine"])
 
 
 def _nome_sicuro(nome: str) -> str:
     """Ripulisce il nome del file (niente percorsi strani), mantenendo l'estensione."""
-    nome = nome.replace("/", "_").replace("\\", "_").strip()
-    return nome or "screenshot.png"
+    return (nome.replace("/", "_").replace("\\", "_").strip()) or "screenshot.png"
 
 
 def _apri_browser():
@@ -73,10 +113,9 @@ def _apri_browser():
 
 
 if __name__ == "__main__":
-    print(f"· Interfaccia grafica avviata. Apri il browser su:  {INDIRIZZO}")
-    print("  (premi CTRL+C in questo terminale per fermarla)")
-    # Pre-riscaldamento: carica e "accende" il modello in background, cosi' la prima
-    # analisi della demo parte gia' calda (e quindi veloce). Avvisa quando e' pronto.
+    print(f"· Interfaccia grafica avviata. Apri il browser su:  {INDIRIZZO}", flush=True)
+    print("  (premi CTRL+C in questo terminale per fermarla)", flush=True)
+    # Pre-riscaldamento: porta il modello "a regime" prima di iniziare. Avvisa quando è pronto.
     print("· Pre-riscaldo il modello… (attendi il messaggio 'Pronto' prima di trascinare)", flush=True)
 
     def _scalda_e_avvisa():
@@ -86,5 +125,4 @@ if __name__ == "__main__":
     threading.Thread(target=_scalda_e_avvisa, daemon=True).start()
     if "--no-browser" not in sys.argv:
         _apri_browser()
-    # threaded=True: la pagina e le immagini si caricano anche mentre il modello lavora.
     app.run(host="127.0.0.1", port=config.PORTA_INTERFACCIA, debug=False, threaded=True)

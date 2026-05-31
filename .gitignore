@@ -16,5 +16,11 @@ report.json
 # --- Immagini caricate dall'interfaccia grafica (app.py) ---
 uploads/
 
+# --- Progetti salvati dall'utente (immagini + report) ---
+progetti/
+
 # --- File di sistema macOS ---
 .DS_Store
+
+# --- Configurazione locale degli strumenti (anteprima, ecc.) ---
+.claude/

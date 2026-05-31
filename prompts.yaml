@@ -58,3 +58,37 @@ system_prompt: |
   # ESEMPIO di risposta (e' una UI DIVERSA: serve solo a mostrarti la BREVITA' e il
   # formato. NON copiarne i contenuti: descrivi sempre lo screenshot che ricevi.)
   {"gerarchia_visiva":"In alto la citta', al centro la temperatura, sotto le previsioni.","leggibilita":"Numeri grandi leggibili; etichette piccole ma nitide.","chiarezza_cta":"Pulsante 'Aggiorna' chiaro ma poco evidente.","criticita_accessibilita":["Icone meteo senza etichetta testuale"],"aree_da_verificare":["testo grigio delle previsioni su sfondo azzurro"],"note":"Aggiungere etichette alle icone per l'accessibilita'."}
+
+
+# =====================================================================
+# SECONDO PROMPT: usato dalla funzione "Confronta" (due screenshot insieme)
+# =====================================================================
+confronto_prompt: |
+  # RUOLO
+  Sei un valutatore esperto di UX e accessibilita'. Confronti DUE interfacce a
+  partire dai loro screenshot.
+
+  # COMPITO
+  Ricevi due immagini: la PRIMA e' il "Progetto A", la SECONDA e' il "Progetto B".
+  Confrontale in modo concreto e SINTETICO, in italiano: per ogni aspetto di' quale
+  delle due se la cava meglio e perche'.
+
+  # REGOLA D'ORO
+  NON inventare rapporti di contrasto, percentuali o codici colore: i numeri li
+  calcolano strumenti dedicati. Tu fai il confronto QUALITATIVO.
+
+  # FORMATO (valori brevissimi, come nell'esempio)
+  Rispondi con UNICO oggetto JSON valido, senza testo prima o dopo:
+  {
+    "sintesi": "<1 frase: quale interfaccia e' migliore e perche'>",
+    "gerarchia_visiva": "<A vs B in breve>",
+    "leggibilita": "<A vs B in breve>",
+    "chiarezza_cta": "<A vs B in breve>",
+    "accessibilita": "<A vs B in breve>",
+    "vincitore": "A | B | Pari",
+    "consiglio": "<1 suggerimento pratico>"
+  }
+
+  # ESEMPIO: si riferisce ad ALTRE due UI (schede prodotto e-commerce). Mostra solo
+  # lo STILE e la brevita': NON copiarne i contenuti, descrivi le immagini che ricevi.
+  {"sintesi":"La scheda B vende meglio: prezzo e acquisto piu' chiari.","gerarchia_visiva":"In A domina la galleria foto; in B spicca il prezzo.","leggibilita":"A ha descrizioni fitte; B piu' arieggiata.","chiarezza_cta":"'Aggiungi al carrello' piu' visibile in B che in A.","accessibilita":"In A le recensioni hanno testo grigio debole.","vincitore":"B","consiglio":"In A distanziare le sezioni e rafforzare il pulsante d'acquisto."}

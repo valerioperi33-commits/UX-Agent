@@ -121,6 +121,23 @@ macOS la 5000 è occupata dal "Ricevitore AirPlay". Si può cambiare con `PORTA`
 
 ---
 
+## Le tre schede: analisi, progetti, confronto
+
+L'interfaccia è organizzata in tre schede:
+
+1. **Nuova analisi** — scrivi un **nome progetto**, poi trascina lo screenshot. Al
+   termine il progetto viene **salvato** in `progetti/<nome>/` (immagine + `analisi.json`).
+2. **Progetti fatti** — la galleria delle analisi salvate: si **aggiorna da sola** a ogni
+   nuova analisi. Clicca una scheda per rivedere il report completo.
+3. **Confronta** — scegli **due** progetti già fatti e l'agente li mette a confronto:
+   giudizio aspetto per aspetto (gerarchia, leggibilità, CTA, accessibilità) con un
+   "vincitore", più il confronto dei numeri di contrasto.
+
+Vale sempre la regola d'oro: il modello **confronta a parole**, i **numeri di contrasto**
+restano quelli calcolati dai tool.
+
+---
+
 ## Velocità e scelta del modello
 
 Tutto si imposta nel file `.env` (nessuna modifica al codice). Il progetto è già
@@ -155,23 +172,26 @@ Per cambiare modello: `ollama pull <nome>` e poi aggiorna `MODELLO_VISION` in `.
 ├── main.py            # avvio DA TERMINALE: trova gli screenshot e lancia l'analisi
 ├── app.py             # avvio INTERFACCIA GRAFICA (app web locale): stessa analisi
 ├── avvia_interfaccia.command  # doppio click per avviare l'interfaccia senza terminale
-├── agent.py           # orchestrazione: parla col modello e usa i tool
+├── agent.py           # orchestrazione: analisi e confronto (parla col modello e usa i tool)
+├── progetti.py        # salva/rilegge i "progetti" (immagine + report) nella cartella progetti/
 ├── config.py          # legge le impostazioni da .env
 ├── registry.py        # scopre automaticamente i tool nella cartella tools/
 ├── report.py          # impagina il risultato per il terminale (report.md/.json)
-├── prompts.yaml       # system prompt (la parte linguistica del progetto)
+├── prompts.yaml       # system prompt + prompt di confronto (la parte linguistica)
 ├── requirements.txt   # dipendenze per ricreare l'ambiente sul secondo Mac
 ├── .env.example       # esempio di configurazione (da copiare in .env)
 ├── templates/         # pagine HTML dell'interfaccia grafica
-│   ├── index.html             # pagina col drag-and-drop
-│   └── risultato.html         # report mostrato graficamente
+│   ├── index.html             # pagina a schede (nuova analisi / progetti / confronta)
+│   ├── risultato.html         # report di un'analisi
+│   └── confronto.html         # risultato di un confronto
 ├── tools/
 │   ├── contrast.py            # rapporto di contrasto WCAG tra due colori
 │   ├── extract_palette.py     # colori dominanti di un'immagine
 │   ├── check_contrast_pairs.py# controlla più coppie testo/sfondo insieme
 │   └── ocr.py                 # trova il testo e ne campiona i colori reali
 ├── screens/           # screenshot per l'uso da terminale
-└── uploads/           # immagini caricate dall'interfaccia (create in automatico)
+├── uploads/           # file temporaneo dell'immagine caricata (creato in automatico)
+└── progetti/          # un sottocartella per progetto: immagine + analisi.json
 ```
 
 ---

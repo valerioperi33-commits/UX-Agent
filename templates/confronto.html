@@ -1,0 +1,45 @@
+{# confronto.html — risultato della funzione "Confronta". Riceve: c (dizionario con
+   a, b, confronto, contrasto_a, contrasto_b, tempo_s). #}
+{% set cf = c.confronto %}
+{% set v = cf.get('vincitore') %}
+<div class="report">
+  <h2>⚖︎ Confronto</h2>
+  <div class="meta">
+    ⏱️ {{ c.tempo_s }}s · Vincitore:
+    <span class="vincitore">
+      {% if v == 'A' %}A · {{ c.a.nome }}{% elif v == 'B' %}B · {{ c.b.nome }}{% else %}Pari{% endif %}
+    </span>
+  </div>
+
+  {% if cf.get('sintesi') %}<div class="scheda"><b>Sintesi</b><p>{{ cf.sintesi }}</p></div>{% endif %}
+
+  <div class="conf-griglia">
+    <div class="conf-col">
+      <img src="/immagine/{{ c.a.slug }}" alt="Progetto A">
+      <div class="card-nome">A · {{ c.a.nome }}</div>
+      <div class="card-badge">{{ c.contrasto_a.promosse_AA }}/{{ c.contrasto_a.totale }} testi superano AA · peggiore {{ c.contrasto_a.peggior_rapporto }}:1</div>
+    </div>
+    <div class="conf-col">
+      <img src="/immagine/{{ c.b.slug }}" alt="Progetto B">
+      <div class="card-nome">B · {{ c.b.nome }}</div>
+      <div class="card-badge">{{ c.contrasto_b.promosse_AA }}/{{ c.contrasto_b.totale }} testi superano AA · peggiore {{ c.contrasto_b.peggior_rapporto }}:1</div>
+    </div>
+  </div>
+
+  <h3>Confronto per aspetto (modello)</h3>
+  {% if cf.get('_grezzo') %}
+    <p class="errore">Il modello non ha restituito un JSON valido. Testo grezzo:</p>
+    <pre>{{ cf.get('_grezzo') }}</pre>
+  {% else %}
+    {% if cf.get('gerarchia_visiva') %}<div class="scheda"><b>Gerarchia visiva</b><p>{{ cf.gerarchia_visiva }}</p></div>{% endif %}
+    {% if cf.get('leggibilita') %}<div class="scheda"><b>Leggibilità</b><p>{{ cf.leggibilita }}</p></div>{% endif %}
+    {% if cf.get('chiarezza_cta') %}<div class="scheda"><b>Chiarezza della CTA</b><p>{{ cf.chiarezza_cta }}</p></div>{% endif %}
+    {% if cf.get('accessibilita') %}<div class="scheda"><b>Accessibilità</b><p>{{ cf.accessibilita }}</p></div>{% endif %}
+    {% if cf.get('consiglio') %}<div class="scheda"><b>Consiglio pratico</b><p>{{ cf.consiglio }}</p></div>{% endif %}
+  {% endif %}
+
+  <p class="fonte" style="margin-top:14px">
+    Il confronto qualitativo è del modello; i numeri di contrasto (testi che superano l'AA)
+    vengono dai tool. Valutazione di prima passata, non una certificazione WCAG legale.
+  </p>
+</div>

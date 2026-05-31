@@ -22,10 +22,15 @@ import config
 from registry import scopri_tool
 
 
-def carica_system_prompt() -> str:
-    """Legge il system prompt dal file prompts.yaml (la parte 'linguistica')."""
+def _leggi_prompt(chiave: str) -> str:
+    """Legge un prompt (per chiave) dal file prompts.yaml."""
     with open(config.RADICE / "prompts.yaml", "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)["system_prompt"]
+        return yaml.safe_load(f)[chiave]
+
+
+def carica_system_prompt() -> str:
+    """System prompt per l'ANALISI di un singolo screenshot (la parte 'linguistica')."""
+    return _leggi_prompt("system_prompt")
 
 
 def _client_ollama():
@@ -230,4 +235,56 @@ def analizza_screenshot(percorso_immagine: Path) -> dict:
             "strumenti_s": round(t2 - t1, 1),
             "totale_s": round(t2 - t0, 1),
         },
+    }
+
+
+def confronta_progetti(slug_a: str, slug_b: str) -> dict:
+    """
+    Confronta due progetti gia' salvati.
+      - CERVELLO: il modello guarda ENTRAMBE le immagini e le confronta a parole.
+      - MANI: affianchiamo i dati di contrasto gia' calcolati (numeri dai tool, non dal modello).
+    """
+    import progetti                                  # qui dentro per evitare cicli all'avvio
+
+    a = progetti.carica_progetto(slug_a)
+    b = progetti.carica_progetto(slug_b)
+    if not a or not b:
+        raise ValueError("Uno dei due progetti da confrontare non esiste.")
+
+    rc_a = progetti.riepilogo_contrasto(a["risultato"])
+    rc_b = progetti.riepilogo_contrasto(b["risultato"])
+    img_a = _immagine_per_modello(progetti.percorso_immagine(slug_a))
+    img_b = _immagine_per_modello(progetti.percorso_immagine(slug_b))
+
+    # Diamo al modello i numeri di contrasto GIA' calcolati dai tool: cosi' il giudizio
+    # sull'accessibilita' e' ancorato ai fatti (il modello non li reinventa).
+    contesto = (
+        f'Confronta queste due interfacce reali. La PRIMA immagine e\' il Progetto A '
+        f'("{a["nome"]}"), la SECONDA e\' il Progetto B ("{b["nome"]}"). '
+        "Descrivi SOLO cio\' che vedi in QUESTE due immagini. "
+        "Dati di contrasto gia\' misurati dai tool (usali, non ricalcolarli): "
+        f'A = {rc_a["promosse_AA"]}/{rc_a["totale"]} testi superano AA, peggiore {rc_a["peggior_rapporto"]}:1; '
+        f'B = {rc_b["promosse_AA"]}/{rc_b["totale"]} testi superano AA, peggiore {rc_b["peggior_rapporto"]}:1.'
+    )
+
+    t0 = time.perf_counter()
+    risposta = _client_ollama().chat(
+        model=config.MODELLO_VISION,
+        format="json",
+        keep_alive=config.OLLAMA_KEEP_ALIVE,
+        options={"temperature": 0.2, "num_predict": config.MAX_TOKEN_RISPOSTA + 120},
+        messages=[
+            {"role": "system", "content": _leggi_prompt("confronto_prompt")},
+            {"role": "user", "content": contesto, "images": [img_a, img_b]},
+        ],
+    )
+    confronto = _carica_json_robusto(risposta["message"]["content"])
+
+    return {
+        "a": a,
+        "b": b,
+        "confronto": confronto,
+        "contrasto_a": rc_a,
+        "contrasto_b": rc_b,
+        "tempo_s": round(time.perf_counter() - t0, 1),
     }

@@ -1,17 +1,14 @@
-{# risultato.html — frammento HTML del report, inserito nella pagina dopo l'analisi.
-   Usa gli stessi dati che l'agente produce per il terminale: qui cambia solo la veste. #}
+{# risultato.html — report di un progetto (per una nuova analisi o per rivederne uno
+   salvato). Riceve dal server: r (risultato), nome, data, img_url. #}
 <div class="report">
-  <h2>📋 Report — {{ nome }}</h2>
-  {% if r.tempi %}
-    <p class="fonte">⏱️ Tempo di analisi: modello <b>{{ r.tempi.modello_s }}s</b>
-       + strumenti <b>{{ r.tempi.strumenti_s }}s</b> = <b>{{ r.tempi.totale_s }}s</b></p>
-  {% endif %}
+  <h2>📋 {{ nome }}</h2>
+  <div class="meta">
+    {% if data %}Analizzato il {{ data }}{% endif %}
+    {% if r.tempi %} · ⏱️ {{ r.tempi.totale_s }}s (modello {{ r.tempi.modello_s }}s + strumenti {{ r.tempi.strumenti_s }}s){% endif %}
+  </div>
 
   <div class="due-colonne">
-    <div class="anteprima">
-      <img src="/uploads/{{ nome }}" alt="screenshot analizzato">
-    </div>
-
+    <div class="anteprima"><img src="{{ img_url }}" alt="screenshot analizzato"></div>
     <div class="qualitativo">
       <h3>Valutazione qualitativa (modello)</h3>
       {% set q = r.qualitativo %}
@@ -19,63 +16,47 @@
         <p class="errore">Il modello non ha restituito un JSON valido. Testo grezzo:</p>
         <pre>{{ q.get('_grezzo') }}</pre>
       {% else %}
-        {% if q.get('gerarchia_visiva') %}<div class="card"><b>Gerarchia visiva</b><p>{{ q.gerarchia_visiva }}</p></div>{% endif %}
-        {% if q.get('leggibilita') %}<div class="card"><b>Leggibilità</b><p>{{ q.leggibilita }}</p></div>{% endif %}
-        {% if q.get('chiarezza_cta') %}<div class="card"><b>Chiarezza della CTA</b><p>{{ q.chiarezza_cta }}</p></div>{% endif %}
-        {% if q.get('coerenza_e_layout') %}<div class="card"><b>Coerenza e layout</b><p>{{ q.coerenza_e_layout }}</p></div>{% endif %}
-        {% if q.get('criticita_accessibilita') %}
-          <div class="card"><b>Criticità di accessibilità</b>
-            <ul>{% for c in q.criticita_accessibilita %}<li>{{ c }}</li>{% endfor %}</ul>
-          </div>
-        {% endif %}
-        {% if q.get('aree_da_verificare') %}
-          <div class="card"><b>Aree da verificare (contrasto)</b>
-            <ul>{% for a in q.aree_da_verificare %}<li>{{ a }}</li>{% endfor %}</ul>
-          </div>
-        {% endif %}
-        {% if q.get('note') %}<div class="card"><b>Note</b><p>{{ q.note }}</p></div>{% endif %}
+        {% if q.get('gerarchia_visiva') %}<div class="scheda"><b>Gerarchia visiva</b><p>{{ q.gerarchia_visiva }}</p></div>{% endif %}
+        {% if q.get('leggibilita') %}<div class="scheda"><b>Leggibilità</b><p>{{ q.leggibilita }}</p></div>{% endif %}
+        {% if q.get('chiarezza_cta') %}<div class="scheda"><b>Chiarezza della CTA</b><p>{{ q.chiarezza_cta }}</p></div>{% endif %}
+        {% if q.get('coerenza_e_layout') %}<div class="scheda"><b>Coerenza e layout</b><p>{{ q.coerenza_e_layout }}</p></div>{% endif %}
+        {% if q.get('criticita_accessibilita') %}<div class="scheda"><b>Criticità di accessibilità</b><ul>{% for c in q.criticita_accessibilita %}<li>{{ c }}</li>{% endfor %}</ul></div>{% endif %}
+        {% if q.get('aree_da_verificare') %}<div class="scheda"><b>Aree da verificare (contrasto)</b><ul>{% for a in q.aree_da_verificare %}<li>{{ a }}</li>{% endfor %}</ul></div>{% endif %}
+        {% if q.get('note') %}<div class="scheda"><b>Note</b><p>{{ q.note }}</p></div>{% endif %}
       {% endif %}
     </div>
   </div>
 
   <h3>Misure oggettive di contrasto (tool WCAG)</h3>
-
   {% if r.palette %}
     <div class="palette">
       {% for c in r.palette %}
         <div class="swatch" title="{{ c.hex }} — {{ c.percentuale }}%">
           <span class="box" style="background: {{ c.hex }}"></span>
-          <span class="hex">{{ c.hex }}</span>
-          <span class="perc">{{ c.percentuale }}%</span>
+          <span class="hex">{{ c.hex }}</span><span class="perc">{{ c.percentuale }}%</span>
         </div>
       {% endfor %}
     </div>
   {% endif %}
-
   {% if r.fonte_coppie %}<p class="fonte">Coppie testo/sfondo ricavate da: <b>{{ r.fonte_coppie }}</b></p>{% endif %}
   {% if r.nota_ocr %}<p class="nota">ℹ️ {{ r.nota_ocr }}</p>{% endif %}
 
   {% set dettaglio = r.contrasto.dettaglio %}
   {% if dettaglio %}
     <table class="contrasto">
-      <thead>
-        <tr>
-          <th>Coppia (testo su sfondo)</th><th>Anteprima</th><th>Rapporto</th>
-          <th>AA norm.</th><th>AA gr.</th><th>AAA norm.</th><th>AAA gr.</th>
-        </tr>
-      </thead>
+      <thead><tr>
+        <th>Coppia (testo su sfondo)</th><th>Anteprima</th><th>Rapporto</th>
+        <th>AA norm.</th><th>AA gr.</th><th>AAA norm.</th><th>AAA gr.</th>
+      </tr></thead>
       <tbody>
         {% for d in dettaglio %}
           <tr>
             <td class="coppia">
-              <span class="campioni">
-                <span class="mini" style="background: {{ d.colore_1 }}"></span>
-                <span class="mini" style="background: {{ d.colore_2 }}"></span>
-              </span>
+              <span class="campioni"><span class="mini" style="background:{{ d.colore_1 }}"></span><span class="mini" style="background:{{ d.colore_2 }}"></span></span>
               <span class="num">{{ d.colore_1 }}</span> su <span class="num">{{ d.colore_2 }}</span>
               {% if d.etichetta %}<div class="etichetta">{{ d.etichetta }}</div>{% endif %}
             </td>
-            <td><span class="prova" style="background: {{ d.colore_2 }}; color: {{ d.colore_1 }}">Aa</span></td>
+            <td><span class="prova" style="background:{{ d.colore_2 }};color:{{ d.colore_1 }}">Aa</span></td>
             <td class="num">{{ d.rapporto_formattato }}</td>
             <td>{% if d.esiti.AA_testo_normale %}<span class="ok">✓</span>{% else %}<span class="ko">✗</span>{% endif %}</td>
             <td>{% if d.esiti.AA_testo_grande %}<span class="ok">✓</span>{% else %}<span class="ko">✗</span>{% endif %}</td>
@@ -85,11 +66,7 @@
         {% endfor %}
       </tbody>
     </table>
-  {% else %}
-    <p class="fonte">Nessuna coppia di colori da controllare.</p>
-  {% endif %}
+  {% else %}<p class="fonte">Nessuna coppia di colori da controllare.</p>{% endif %}
 
-  <p class="fonte" style="margin-top:16px">
-    Valutazione di <b>prima passata</b>, non una certificazione WCAG legale: i colori sono stimati dai pixel.
-  </p>
+  <p class="fonte" style="margin-top:14px">Valutazione di <b>prima passata</b>, non una certificazione WCAG legale: i colori sono stimati dai pixel.</p>
 </div>

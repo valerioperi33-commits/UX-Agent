@@ -5,146 +5,299 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>agente-ux — valutazione UX & accessibilità</title>
   <style>
-    /* --- Stile semplice e leggibile (tutto qui, in un punto solo) --- */
-    :root { --blu:#2b59c3; --bordo:#d8dce4; --sfondo:#f5f6f8; --testo:#1f2430; }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
-      background: var(--sfondo); color: var(--testo); line-height: 1.5;
+    /* ===================== STILE (tutto in un punto solo) ===================== */
+    :root{
+      --primario:#4f46e5; --primario-chiaro:#eef2ff; --bordo:#e3e6ee;
+      --sfondo:#f4f5f9; --testo:#1f2430; --grigio:#6b7280;
+      --ok:#137333; --ko:#c5221f; --ombra:0 1px 3px rgba(20,24,40,.08),0 8px 24px rgba(20,24,40,.05);
     }
-    header { padding: 28px 20px 10px; text-align: center; }
-    header h1 { margin: 0; font-size: 26px; }
-    header p { margin: 6px 0 0; color: #5b6270; }
-    main { max-width: 960px; margin: 0 auto; padding: 16px 20px 60px; }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--sfondo);color:var(--testo);line-height:1.5;
+         font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif}
 
-    .avviso { background: #fff4e5; border: 1px solid #ffd8a8; color: #8a5400;
-              padding: 12px 16px; border-radius: 10px; margin: 12px 0; white-space: pre-line; }
+    header{background:#fff;border-bottom:1px solid var(--bordo);padding:18px 24px}
+    header .titolo{font-size:20px;font-weight:700}
+    header .sotto{color:var(--grigio);font-size:13px}
 
-    /* Riquadro del drag-and-drop */
-    #dropzone {
-      border: 2px dashed var(--bordo); border-radius: 16px; background: #fff;
-      padding: 48px 20px; text-align: center; cursor: pointer; transition: .15s;
-    }
-    #dropzone.attivo { border-color: var(--blu); background: #eef2ff; }
-    #dropzone .icona { font-size: 42px; }
-    #dropzone .titolo { font-size: 18px; font-weight: 600; margin-top: 8px; }
-    #dropzone .sotto { color: #6b7280; font-size: 14px; margin-top: 4px; }
-    #fileInput { display: none; }
+    /* Schede (tab) */
+    .tabbar{display:flex;gap:8px;padding:14px 24px 0;background:#fff;border-bottom:1px solid var(--bordo);
+            position:sticky;top:0;z-index:5;flex-wrap:wrap}
+    .tabbar button{border:none;background:transparent;color:var(--grigio);font-size:15px;font-weight:600;
+                   padding:10px 16px;border-radius:10px 10px 0 0;cursor:pointer}
+    .tabbar button.attivo{color:var(--primario);background:var(--primario-chiaro)}
+    .conta{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:10px;
+           background:var(--bordo);color:var(--testo);font-size:12px;text-align:center}
 
-    /* Overlay di attesa */
-    #overlay {
-      display: none; position: fixed; inset: 0; background: rgba(255,255,255,.85);
-      flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 10;
-    }
-    .spinner { width: 46px; height: 46px; border: 5px solid #d8dce4; border-top-color: var(--blu);
-               border-radius: 50%; animation: gira 1s linear infinite; }
-    @keyframes gira { to { transform: rotate(360deg); } }
+    main{max-width:1000px;margin:0 auto;padding:24px}
+    .tab{display:none}
+    .tab.attiva{display:block;animation:entra .2s ease}
+    @keyframes entra{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
 
-    /* Report */
-    .report { background: #fff; border: 1px solid var(--bordo); border-radius: 16px;
-              padding: 22px; margin-top: 22px; }
-    .report h2 { margin-top: 0; }
-    .due-colonne { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
-    @media (max-width: 760px) { .due-colonne { grid-template-columns: 1fr; } }
-    .anteprima img { width: 100%; border: 1px solid var(--bordo); border-radius: 10px; }
-    .card { background: var(--sfondo); border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
-    .card b { display: block; font-size: 13px; text-transform: uppercase; letter-spacing: .03em; color: #5b6270; }
-    .card p, .card ul { margin: 6px 0 0; }
-    .card ul { padding-left: 18px; }
+    h2{font-size:18px;margin:0 0 14px}
+    .pannello{background:#fff;border:1px solid var(--bordo);border-radius:16px;padding:20px;box-shadow:var(--ombra)}
 
-    .palette { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 14px; }
-    .swatch { display: flex; flex-direction: column; align-items: center; font-size: 12px; }
-    .swatch .box { width: 46px; height: 46px; border-radius: 8px; border: 1px solid var(--bordo); }
-    .swatch .hex { margin-top: 4px; font-family: ui-monospace, monospace; }
-    .swatch .perc { color: #6b7280; }
+    /* Campo nome progetto */
+    .campo{display:block;margin-bottom:14px}
+    .campo span{display:block;font-size:13px;font-weight:600;color:var(--grigio);margin-bottom:6px}
+    .campo input{width:100%;padding:11px 14px;border:1px solid var(--bordo);border-radius:10px;font-size:15px}
+    .campo input:focus{outline:none;border-color:var(--primario);box-shadow:0 0 0 3px var(--primario-chiaro)}
 
-    .fonte { color: #5b6270; font-size: 14px; margin: 6px 0; }
-    .nota { background: #eef2ff; border-radius: 8px; padding: 8px 12px; font-size: 14px; }
+    /* Drag and drop */
+    .dropzone{border:2px dashed var(--bordo);border-radius:14px;padding:40px 20px;text-align:center;
+              cursor:pointer;transition:.15s;background:#fafbff}
+    .dropzone.attivo{border-color:var(--primario);background:var(--primario-chiaro)}
+    .dropzone .icona{font-size:40px}
+    .dropzone .titolo{font-size:17px;font-weight:600;margin-top:6px}
+    .dropzone .sotto{color:var(--grigio);font-size:14px}
 
-    table.contrasto { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-    table.contrasto th, table.contrasto td { border-bottom: 1px solid var(--bordo); padding: 8px 6px; text-align: center; }
-    table.contrasto th { background: var(--sfondo); font-size: 12px; color: #5b6270; }
-    td.coppia { text-align: left; }
-    .campioni { display: inline-flex; gap: 3px; vertical-align: middle; }
-    .mini { width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--bordo); display: inline-block; }
-    .etichetta { font-size: 12px; color: #5b6270; font-family: ui-monospace, monospace; margin-top: 2px; }
-    .num { font-family: ui-monospace, monospace; font-weight: 600; }
-    .prova { display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 700; border: 1px solid var(--bordo); }
-    .ok { color: #137333; font-weight: 700; }
-    .ko { color: #c5221f; font-weight: 700; }
-    .errore { color: #c5221f; }
+    /* Pulsanti */
+    .btn{background:var(--primario);color:#fff;border:none;padding:11px 20px;border-radius:10px;
+         font-size:15px;font-weight:600;cursor:pointer}
+    .btn:hover{filter:brightness(1.05)}
+    .btn-ghost{background:#fff;border:1px solid var(--bordo);color:var(--testo);padding:8px 14px;
+               border-radius:10px;cursor:pointer;font-weight:600}
+
+    /* Barra titolo sezione */
+    .barra{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+
+    /* Griglia progetti */
+    .griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+    .card{background:#fff;border:1px solid var(--bordo);border-radius:14px;overflow:hidden;cursor:pointer;
+          box-shadow:var(--ombra);transition:.15s}
+    .card:hover{transform:translateY(-2px);border-color:var(--primario)}
+    .card-img{height:120px;background-size:cover;background-position:top center;background-color:#eef0f5}
+    .card-body{padding:12px 14px}
+    .card-nome{font-weight:700}
+    .card-data{color:var(--grigio);font-size:12px;margin:2px 0 8px}
+    .card-badge{font-size:12px;background:var(--sfondo);border-radius:8px;padding:6px 8px;color:#444}
+    .vuoto{color:var(--grigio);text-align:center;padding:40px}
+
+    /* Confronta */
+    .confronta-scelte{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+    .confronta-scelte select{flex:1;min-width:160px;padding:10px;border:1px solid var(--bordo);border-radius:10px;font-size:14px}
+    .vs{font-weight:700;color:var(--grigio)}
+
+    /* ---- Stili del REPORT (usati dai frammenti iniettati) ---- */
+    .report{background:#fff;border:1px solid var(--bordo);border-radius:16px;padding:22px;margin-top:18px;box-shadow:var(--ombra)}
+    .report h2,.report h3{margin-top:0}
+    .meta{color:var(--grigio);font-size:13px;margin-bottom:14px}
+    .due-colonne{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+    @media (max-width:760px){.due-colonne{grid-template-columns:1fr}}
+    .anteprima img{width:100%;border:1px solid var(--bordo);border-radius:10px}
+    .scheda{background:var(--sfondo);border-radius:10px;padding:10px 14px;margin-bottom:10px}
+    .scheda b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--grigio)}
+    .scheda p,.scheda ul{margin:6px 0 0}.scheda ul{padding-left:18px}
+    .palette{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 14px}
+    .swatch{display:flex;flex-direction:column;align-items:center;font-size:12px}
+    .swatch .box{width:44px;height:44px;border-radius:8px;border:1px solid var(--bordo)}
+    .swatch .hex{margin-top:4px;font-family:ui-monospace,monospace}
+    .swatch .perc{color:var(--grigio)}
+    .fonte{color:var(--grigio);font-size:13px;margin:6px 0}
+    .nota{background:var(--primario-chiaro);border-radius:8px;padding:8px 12px;font-size:13px}
+    table.contrasto{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+    table.contrasto th,table.contrasto td{border-bottom:1px solid var(--bordo);padding:8px 6px;text-align:center}
+    table.contrasto th{background:var(--sfondo);font-size:12px;color:var(--grigio)}
+    td.coppia{text-align:left}
+    .campioni{display:inline-flex;gap:3px;vertical-align:middle}
+    .mini{width:16px;height:16px;border-radius:4px;border:1px solid var(--bordo);display:inline-block}
+    .etichetta{font-size:12px;color:var(--grigio);font-family:ui-monospace,monospace;margin-top:2px}
+    .num{font-family:ui-monospace,monospace;font-weight:600}
+    .prova{display:inline-block;padding:4px 10px;border-radius:6px;font-weight:700;border:1px solid var(--bordo)}
+    .ok{color:var(--ok);font-weight:700}.ko{color:var(--ko);font-weight:700}
+    .errore{color:var(--ko)}
+
+    /* Confronto */
+    .vincitore{display:inline-block;background:var(--primario);color:#fff;border-radius:999px;padding:4px 14px;font-weight:700}
+    .conf-griglia{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0}
+    @media (max-width:760px){.conf-griglia{grid-template-columns:1fr}}
+    .conf-col{border:1px solid var(--bordo);border-radius:12px;padding:12px}
+    .conf-col img{width:100%;border-radius:8px;border:1px solid var(--bordo)}
+
+    /* Overlay attesa */
+    .overlay{position:fixed;inset:0;background:rgba(255,255,255,.88);display:flex;flex-direction:column;
+             align-items:center;justify-content:center;gap:12px;z-index:30}
+    .spinner{width:46px;height:46px;border:5px solid var(--bordo);border-top-color:var(--primario);
+             border-radius:50%;animation:gira 1s linear infinite}
+    @keyframes gira{to{transform:rotate(360deg)}}
+    .overlay-sub{color:var(--grigio)}
+
+    /* Finestra di dettaglio (modale) */
+    .modale{position:fixed;inset:0;background:rgba(20,24,40,.5);display:flex;align-items:flex-start;
+            justify-content:center;padding:30px 16px;overflow:auto;z-index:20}
+    .modale-box{background:var(--sfondo);border-radius:16px;max-width:920px;width:100%;padding:10px;position:relative}
+    .chiudi{position:absolute;top:14px;right:14px;border:none;background:#fff;border:1px solid var(--bordo);
+            width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;z-index:1}
+    [hidden]{display:none !important}
   </style>
 </head>
 <body>
   <header>
-    <h1>🧪 agente-ux</h1>
-    <p>Valutazione di UX e accessibilità da screenshot — tutto in locale</p>
+    <div class="titolo">🧪 agente-ux</div>
+    <div class="sotto">Valutazione di UX e accessibilità da screenshot — tutto in locale</div>
   </header>
 
+  <nav class="tabbar">
+    <button data-tab="nuova" class="attivo">＋ Nuova analisi</button>
+    <button data-tab="progetti">Progetti fatti <span id="contaProgetti" class="conta">0</span></button>
+    <button data-tab="confronta">⚖︎ Confronta</button>
+  </nav>
+
   <main>
-    {% if not ambiente_ok %}
-      <div class="avviso">⚠️ {{ messaggio_ambiente }}</div>
-    {% endif %}
+    {% if not ambiente_ok %}<div class="nota" style="margin-bottom:16px">⚠️ {{ messaggio_ambiente }}</div>{% endif %}
 
-    <div id="dropzone">
-      <div class="icona">🖼️</div>
-      <div class="titolo">Trascina qui uno screenshot</div>
-      <div class="sotto">oppure clicca per sceglierlo (PNG o JPG)</div>
-    </div>
-    <input type="file" id="fileInput" accept="image/*">
+    <!-- ===== SCHEDA: NUOVA ANALISI ===== -->
+    <section id="tab-nuova" class="tab attiva">
+      <div class="pannello">
+        <label class="campo">
+          <span>Nome del progetto</span>
+          <input type="text" id="nomeProgetto" placeholder="Es. Landing prodotto X" autocomplete="off">
+        </label>
+        <div id="dropzone" class="dropzone">
+          <div class="icona">🖼️</div>
+          <div class="titolo">Trascina qui uno screenshot</div>
+          <div class="sotto">oppure clicca per sceglierlo (PNG o JPG)</div>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" hidden>
+      </div>
+      <div id="risultatoNuova"></div>
+    </section>
 
-    <div id="result"></div>
+    <!-- ===== SCHEDA: PROGETTI FATTI ===== -->
+    <section id="tab-progetti" class="tab">
+      <div class="barra">
+        <h2>Progetti fatti</h2>
+        <button id="aggiorna" class="btn-ghost">↻ Aggiorna</button>
+      </div>
+      <div id="grigliaProgetti" class="griglia"></div>
+      <p id="nessunProgetto" class="vuoto" hidden>Nessun progetto ancora. Fai la tua prima analisi! 🚀</p>
+    </section>
+
+    <!-- ===== SCHEDA: CONFRONTA ===== -->
+    <section id="tab-confronta" class="tab">
+      <h2>Confronta due analisi</h2>
+      <div class="pannello">
+        <div class="confronta-scelte">
+          <select id="selA"></select>
+          <span class="vs">vs</span>
+          <select id="selB"></select>
+          <button id="btnConfronta" class="btn">Confronta</button>
+        </div>
+        <p class="fonte">Scegli due progetti già analizzati: l'agente li mette a confronto.</p>
+      </div>
+      <div id="risultatoConfronto"></div>
+    </section>
   </main>
 
-  <div id="overlay">
+  <!-- Overlay di attesa -->
+  <div id="overlay" class="overlay" hidden>
     <div class="spinner"></div>
-    <div><b>Analisi in corso…</b> <span id="tempo">0s</span></div>
-    <div style="color:#5b6270">Il modello sta valutando lo screenshot.</div>
+    <div><b id="overlayTitolo">Analisi in corso…</b> <span id="tempo">0s</span></div>
+    <div class="overlay-sub">Il modello sta lavorando.</div>
+  </div>
+
+  <!-- Finestra di dettaglio progetto -->
+  <div id="modale" class="modale" hidden>
+    <div class="modale-box">
+      <button id="chiudiModale" class="chiudi">✕</button>
+      <div id="modaleContenuto"></div>
+    </div>
   </div>
 
   <script>
-    // --- Drag-and-drop + invio del file all'agente (stessa analisi del terminale) ---
-    const dz = document.getElementById('dropzone');
-    const input = document.getElementById('fileInput');
-    const result = document.getElementById('result');
+    // ---------- Navigazione a schede ----------
+    const bottoni = document.querySelectorAll('.tabbar button[data-tab]');
+    const sezioni = document.querySelectorAll('.tab');
+    bottoni.forEach(b => b.addEventListener('click', () => {
+      bottoni.forEach(x => x.classList.toggle('attivo', x === b));
+      sezioni.forEach(s => s.classList.toggle('attiva', s.id === 'tab-' + b.dataset.tab));
+    }));
+
+    // ---------- Overlay con cronometro ----------
     const overlay = document.getElementById('overlay');
+    let cronometro;
+    function avviaAttesa(titolo){
+      document.getElementById('overlayTitolo').textContent = titolo;
+      const tempoEl = document.getElementById('tempo'); const inizio = Date.now();
+      tempoEl.textContent = '0s';
+      cronometro = setInterval(() => tempoEl.textContent = ((Date.now()-inizio)/1000).toFixed(0)+'s', 250);
+      overlay.hidden = false;
+    }
+    function fineAttesa(){ clearInterval(cronometro); overlay.hidden = true; }
 
-    function blocca(e) { e.preventDefault(); e.stopPropagation(); }
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, blocca));
-    ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, () => dz.classList.add('attivo')));
-    ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, () => dz.classList.remove('attivo')));
-
+    // ---------- Nuova analisi (drag and drop) ----------
+    const dz = document.getElementById('dropzone'), input = document.getElementById('fileInput');
+    ['dragenter','dragover','dragleave','drop'].forEach(e => dz.addEventListener(e, ev => {ev.preventDefault(); ev.stopPropagation();}));
+    ['dragenter','dragover'].forEach(e => dz.addEventListener(e, () => dz.classList.add('attivo')));
+    ['dragleave','drop'].forEach(e => dz.addEventListener(e, () => dz.classList.remove('attivo')));
     dz.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) analizza(f); });
     dz.addEventListener('click', () => input.click());
     input.addEventListener('change', () => { if (input.files[0]) analizza(input.files[0]); });
 
-    let cronometro;
-    async function analizza(file) {
-      if (!file.type.startsWith('image/')) { alert("Trascina un'immagine (PNG o JPG)."); return; }
-      overlay.style.display = 'flex';
-      result.innerHTML = '';
-      // Cronometro a video: rassicura durante l'attesa (utile in demo).
-      const tempoEl = document.getElementById('tempo');
-      const inizio = Date.now();
-      tempoEl.textContent = '0s';
-      cronometro = setInterval(() => {
-        tempoEl.textContent = ((Date.now() - inizio) / 1000).toFixed(0) + 's';
-      }, 250);
-
-      const dati = new FormData();
-      dati.append('immagine', file);
-      try {
-        const risposta = await fetch('/analizza', { method: 'POST', body: dati });
-        const html = await risposta.text();
-        result.innerHTML = risposta.ok ? html : '<p class="errore">' + html + '</p>';
-      } catch (err) {
-        result.innerHTML = '<p class="errore">Errore di rete: ' + err + '</p>';
-      } finally {
-        clearInterval(cronometro);
-        overlay.style.display = 'none';
-        result.scrollIntoView({ behavior: 'smooth' });
-      }
+    async function analizza(file){
+      const nome = document.getElementById('nomeProgetto').value.trim();
+      if (!nome){ alert('Dai prima un nome al progetto.'); document.getElementById('nomeProgetto').focus(); return; }
+      if (!file.type.startsWith('image/')){ alert("Serve un'immagine (PNG o JPG)."); return; }
+      avviaAttesa('Analisi in corso…');
+      const fd = new FormData(); fd.append('immagine', file); fd.append('nome_progetto', nome);
+      try{
+        const r = await fetch('/analizza', {method:'POST', body:fd});
+        const html = await r.text();
+        document.getElementById('risultatoNuova').innerHTML = r.ok ? html : '<p class="errore">'+html+'</p>';
+        if (r.ok){ document.getElementById('nomeProgetto').value=''; caricaProgetti(); }
+      }catch(err){ document.getElementById('risultatoNuova').innerHTML = '<p class="errore">Errore: '+err+'</p>'; }
+      finally{ fineAttesa(); document.getElementById('risultatoNuova').scrollIntoView({behavior:'smooth'}); }
     }
+
+    // ---------- Progetti fatti ----------
+    const selA = document.getElementById('selA'), selB = document.getElementById('selB');
+    async function caricaProgetti(){
+      const lista = await (await fetch('/api/progetti')).json();
+      document.getElementById('contaProgetti').textContent = lista.length;
+      document.getElementById('nessunProgetto').hidden = lista.length > 0;
+      const g = document.getElementById('grigliaProgetti');
+      g.innerHTML = lista.map(cardProgetto).join('');
+      g.querySelectorAll('.card').forEach(c => c.addEventListener('click', () => vediProgetto(c.dataset.slug)));
+      const opzioni = lista.map(p => `<option value="${p.slug}">${p.nome}</option>`).join('');
+      selA.innerHTML = opzioni; selB.innerHTML = opzioni;
+      if (lista.length > 1) selB.selectedIndex = 1;
+    }
+    function cardProgetto(p){
+      const c = p.contrasto;
+      return `<div class="card" data-slug="${p.slug}">
+        <div class="card-img" style="background-image:url('${p.img_url}')"></div>
+        <div class="card-body">
+          <div class="card-nome">${p.nome}</div>
+          <div class="card-data">${p.data}</div>
+          <div class="card-badge">${c.promosse_AA}/${c.totale} testi superano AA · peggiore ${c.peggior_rapporto}:1</div>
+        </div></div>`;
+    }
+    async function vediProgetto(slug){
+      const html = await (await fetch('/progetto/' + slug)).text();
+      document.getElementById('modaleContenuto').innerHTML = html;
+      document.getElementById('modale').hidden = false;
+    }
+    document.getElementById('aggiorna').addEventListener('click', caricaProgetti);
+
+    // Finestra di dettaglio
+    document.getElementById('chiudiModale').addEventListener('click', () => document.getElementById('modale').hidden = true);
+    document.getElementById('modale').addEventListener('click', e => { if (e.target.id === 'modale') document.getElementById('modale').hidden = true; });
+
+    // ---------- Confronta ----------
+    document.getElementById('btnConfronta').addEventListener('click', async () => {
+      if (!selA.value || !selB.value){ alert('Servono almeno due progetti.'); return; }
+      if (selA.value === selB.value){ alert('Scegli due progetti diversi.'); return; }
+      avviaAttesa('Confronto in corso…');
+      const fd = new FormData(); fd.append('a', selA.value); fd.append('b', selB.value);
+      try{
+        const r = await fetch('/confronta', {method:'POST', body:fd});
+        const html = await r.text();
+        document.getElementById('risultatoConfronto').innerHTML = r.ok ? html : '<p class="errore">'+html+'</p>';
+      }catch(err){ document.getElementById('risultatoConfronto').innerHTML = '<p class="errore">Errore: '+err+'</p>'; }
+      finally{ fineAttesa(); document.getElementById('risultatoConfronto').scrollIntoView({behavior:'smooth'}); }
+    });
+
+    // Carica i progetti all'apertura
+    caricaProgetti();
   </script>
 </body>
 </html>
