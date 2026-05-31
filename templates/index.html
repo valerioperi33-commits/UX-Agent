@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>agente-ux — valutazione UX & accessibilità</title>
+  <style>
+    /* --- Stile semplice e leggibile (tutto qui, in un punto solo) --- */
+    :root { --blu:#2b59c3; --bordo:#d8dce4; --sfondo:#f5f6f8; --testo:#1f2430; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+      background: var(--sfondo); color: var(--testo); line-height: 1.5;
+    }
+    header { padding: 28px 20px 10px; text-align: center; }
+    header h1 { margin: 0; font-size: 26px; }
+    header p { margin: 6px 0 0; color: #5b6270; }
+    main { max-width: 960px; margin: 0 auto; padding: 16px 20px 60px; }
+
+    .avviso { background: #fff4e5; border: 1px solid #ffd8a8; color: #8a5400;
+              padding: 12px 16px; border-radius: 10px; margin: 12px 0; white-space: pre-line; }
+
+    /* Riquadro del drag-and-drop */
+    #dropzone {
+      border: 2px dashed var(--bordo); border-radius: 16px; background: #fff;
+      padding: 48px 20px; text-align: center; cursor: pointer; transition: .15s;
+    }
+    #dropzone.attivo { border-color: var(--blu); background: #eef2ff; }
+    #dropzone .icona { font-size: 42px; }
+    #dropzone .titolo { font-size: 18px; font-weight: 600; margin-top: 8px; }
+    #dropzone .sotto { color: #6b7280; font-size: 14px; margin-top: 4px; }
+    #fileInput { display: none; }
+
+    /* Overlay di attesa */
+    #overlay {
+      display: none; position: fixed; inset: 0; background: rgba(255,255,255,.85);
+      flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 10;
+    }
+    .spinner { width: 46px; height: 46px; border: 5px solid #d8dce4; border-top-color: var(--blu);
+               border-radius: 50%; animation: gira 1s linear infinite; }
+    @keyframes gira { to { transform: rotate(360deg); } }
+
+    /* Report */
+    .report { background: #fff; border: 1px solid var(--bordo); border-radius: 16px;
+              padding: 22px; margin-top: 22px; }
+    .report h2 { margin-top: 0; }
+    .due-colonne { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 760px) { .due-colonne { grid-template-columns: 1fr; } }
+    .anteprima img { width: 100%; border: 1px solid var(--bordo); border-radius: 10px; }
+    .card { background: var(--sfondo); border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
+    .card b { display: block; font-size: 13px; text-transform: uppercase; letter-spacing: .03em; color: #5b6270; }
+    .card p, .card ul { margin: 6px 0 0; }
+    .card ul { padding-left: 18px; }
+
+    .palette { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 14px; }
+    .swatch { display: flex; flex-direction: column; align-items: center; font-size: 12px; }
+    .swatch .box { width: 46px; height: 46px; border-radius: 8px; border: 1px solid var(--bordo); }
+    .swatch .hex { margin-top: 4px; font-family: ui-monospace, monospace; }
+    .swatch .perc { color: #6b7280; }
+
+    .fonte { color: #5b6270; font-size: 14px; margin: 6px 0; }
+    .nota { background: #eef2ff; border-radius: 8px; padding: 8px 12px; font-size: 14px; }
+
+    table.contrasto { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+    table.contrasto th, table.contrasto td { border-bottom: 1px solid var(--bordo); padding: 8px 6px; text-align: center; }
+    table.contrasto th { background: var(--sfondo); font-size: 12px; color: #5b6270; }
+    td.coppia { text-align: left; }
+    .campioni { display: inline-flex; gap: 3px; vertical-align: middle; }
+    .mini { width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--bordo); display: inline-block; }
+    .etichetta { font-size: 12px; color: #5b6270; font-family: ui-monospace, monospace; margin-top: 2px; }
+    .num { font-family: ui-monospace, monospace; font-weight: 600; }
+    .prova { display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 700; border: 1px solid var(--bordo); }
+    .ok { color: #137333; font-weight: 700; }
+    .ko { color: #c5221f; font-weight: 700; }
+    .errore { color: #c5221f; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🧪 agente-ux</h1>
+    <p>Valutazione di UX e accessibilità da screenshot — tutto in locale</p>
+  </header>
+
+  <main>
+    {% if not ambiente_ok %}
+      <div class="avviso">⚠️ {{ messaggio_ambiente }}</div>
+    {% endif %}
+
+    <div id="dropzone">
+      <div class="icona">🖼️</div>
+      <div class="titolo">Trascina qui uno screenshot</div>
+      <div class="sotto">oppure clicca per sceglierlo (PNG o JPG)</div>
+    </div>
+    <input type="file" id="fileInput" accept="image/*">
+
+    <div id="result"></div>
+  </main>
+
+  <div id="overlay">
+    <div class="spinner"></div>
+    <div><b>Analisi in corso…</b></div>
+    <div style="color:#5b6270">Il modello vision può metterci da 20 a 60 secondi.</div>
+  </div>
+
+  <script>
+    // --- Drag-and-drop + invio del file all'agente (stessa analisi del terminale) ---
+    const dz = document.getElementById('dropzone');
+    const input = document.getElementById('fileInput');
+    const result = document.getElementById('result');
+    const overlay = document.getElementById('overlay');
+
+    function blocca(e) { e.preventDefault(); e.stopPropagation(); }
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, blocca));
+    ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, () => dz.classList.add('attivo')));
+    ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, () => dz.classList.remove('attivo')));
+
+    dz.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) analizza(f); });
+    dz.addEventListener('click', () => input.click());
+    input.addEventListener('change', () => { if (input.files[0]) analizza(input.files[0]); });
+
+    async function analizza(file) {
+      if (!file.type.startsWith('image/')) { alert("Trascina un'immagine (PNG o JPG)."); return; }
+      overlay.style.display = 'flex';
+      result.innerHTML = '';
+      const dati = new FormData();
+      dati.append('immagine', file);
+      try {
+        const risposta = await fetch('/analizza', { method: 'POST', body: dati });
+        const html = await risposta.text();
+        result.innerHTML = risposta.ok ? html : '<p class="errore">' + html + '</p>';
+      } catch (err) {
+        result.innerHTML = '<p class="errore">Errore di rete: ' + err + '</p>';
+      } finally {
+        overlay.style.display = 'none';
+        result.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  </script>
+</body>
+</html>

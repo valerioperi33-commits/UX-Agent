@@ -92,6 +92,29 @@ Il report viene **stampato a terminale** e **salvato** in `report.md` e `report.
 
 ---
 
+## Interfaccia grafica (drag-and-drop)
+
+Oltre al terminale c'è una piccola **app web locale** che fa la **stessa identica analisi**
+(chiama la funzione `analizza_screenshot`): cambia solo la presentazione.
+
+Due modi per avviarla:
+
+- **Da Finder:** doppio click su `avvia_interfaccia.command` (si apre il Terminale e poi il browser).
+- **Da terminale:**
+  ```bash
+  source venv/bin/activate
+  python app.py
+  ```
+
+Il browser si apre da solo su <http://127.0.0.1:5000>: **trascina uno screenshot** nel
+riquadro e, dopo qualche decina di secondi, compare il report con anteprima dell'immagine,
+giudizio qualitativo, palette a colori e tabella dei contrasti con esiti AA/AAA.
+
+Anche l'interfaccia gira **solo in locale**: nessun dato esce dal computer. Per fermarla,
+premi `CTRL+C` nella finestra del Terminale.
+
+---
+
 ## Scegliere il modello in base alla RAM
 
 Il modello si imposta **solo** nel file `.env` (variabile `MODELLO_VISION`): nessuna
@@ -111,20 +134,26 @@ Per cambiare modello: `ollama pull <nome-modello>` e poi aggiorna `MODELLO_VISIO
 
 ```
 .
-├── main.py            # avvio: trova gli screenshot e lancia l'analisi
+├── main.py            # avvio DA TERMINALE: trova gli screenshot e lancia l'analisi
+├── app.py             # avvio INTERFACCIA GRAFICA (app web locale): stessa analisi
+├── avvia_interfaccia.command  # doppio click per avviare l'interfaccia senza terminale
 ├── agent.py           # orchestrazione: parla col modello e usa i tool
 ├── config.py          # legge le impostazioni da .env
 ├── registry.py        # scopre automaticamente i tool nella cartella tools/
-├── report.py          # impagina il risultato (terminale + report.md/.json)
+├── report.py          # impagina il risultato per il terminale (report.md/.json)
 ├── prompts.yaml       # system prompt (la parte linguistica del progetto)
 ├── requirements.txt   # dipendenze per ricreare l'ambiente sul secondo Mac
 ├── .env.example       # esempio di configurazione (da copiare in .env)
+├── templates/         # pagine HTML dell'interfaccia grafica
+│   ├── index.html             # pagina col drag-and-drop
+│   └── risultato.html         # report mostrato graficamente
 ├── tools/
 │   ├── contrast.py            # rapporto di contrasto WCAG tra due colori
 │   ├── extract_palette.py     # colori dominanti di un'immagine
 │   ├── check_contrast_pairs.py# controlla più coppie testo/sfondo insieme
 │   └── ocr.py                 # trova il testo e ne campiona i colori reali
-└── screens/           # qui mettete gli screenshot da analizzare
+├── screens/           # screenshot per l'uso da terminale
+└── uploads/           # immagini caricate dall'interfaccia (create in automatico)
 ```
 
 ---

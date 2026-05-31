@@ -20,6 +20,9 @@ pyyaml>=6.0            # legge il system prompt da prompts.yaml
 Pillow>=10.0.0         # apre gli screenshot e legge i pixel
 numpy>=1.26.0          # calcoli sui colori (palette dominante, separazione testo/sfondo)
 
+# --- Interfaccia grafica (piccola app web locale) ---
+flask>=3.0             # server web locale per il drag-and-drop e la vista del report
+
 # --- OCR: riconoscimento del testo negli screenshot ---
 # NB: per l'OCR NON serve una libreria Python: chiamiamo direttamente il programma
 # di sistema Tesseract (vedi tools/ocr.py). Va installato a parte con Homebrew:

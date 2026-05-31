@@ -13,5 +13,8 @@ screens/*
 report.md
 report.json
 
+# --- Immagini caricate dall'interfaccia grafica (app.py) ---
+uploads/
+
 # --- File di sistema macOS ---
 .DS_Store
