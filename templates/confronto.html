@@ -1,13 +1,13 @@
-{# confronto.html — risultato della funzione "Confronta". Riceve: c (dizionario con
-   a, b, confronto, contrasto_a, contrasto_b, tempo_s). #}
+{# confronto.html — risultato di un confronto (appena fatto o ripreso dai salvati).
+   Riceve: c (dizionario salvato), img_a e img_b (URL delle due immagini). #}
 {% set cf = c.confronto %}
 {% set v = cf.get('vincitore') %}
 <div class="report">
   <h2>⚖︎ Confronto</h2>
   <div class="meta">
-    ⏱️ {{ c.tempo_s }}s · Vincitore:
+    {% if c.data %}{{ c.data }} · {% endif %}⏱️ {{ c.tempo_s }}s · Vincitore:
     <span class="vincitore">
-      {% if v == 'A' %}A · {{ c.a.nome }}{% elif v == 'B' %}B · {{ c.b.nome }}{% else %}Pari{% endif %}
+      {% if v == 'A' %}A · {{ c.nome_a }}{% elif v == 'B' %}B · {{ c.nome_b }}{% else %}Pari{% endif %}
     </span>
   </div>
 
@@ -15,13 +15,13 @@
 
   <div class="conf-griglia">
     <div class="conf-col">
-      <img src="/immagine/{{ c.a.slug }}" alt="Progetto A">
-      <div class="card-nome">A · {{ c.a.nome }}</div>
+      <img src="{{ img_a }}" alt="Progetto A">
+      <div class="card-nome">A · {{ c.nome_a }}</div>
       <div class="card-badge">{{ c.contrasto_a.promosse_AA }}/{{ c.contrasto_a.totale }} testi superano AA · peggiore {{ c.contrasto_a.peggior_rapporto }}:1</div>
     </div>
     <div class="conf-col">
-      <img src="/immagine/{{ c.b.slug }}" alt="Progetto B">
-      <div class="card-nome">B · {{ c.b.nome }}</div>
+      <img src="{{ img_b }}" alt="Progetto B">
+      <div class="card-nome">B · {{ c.nome_b }}</div>
       <div class="card-badge">{{ c.contrasto_b.promosse_AA }}/{{ c.contrasto_b.totale }} testi superano AA · peggiore {{ c.contrasto_b.peggior_rapporto }}:1</div>
     </div>
   </div>

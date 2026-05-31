@@ -95,3 +95,74 @@ def riepilogo_contrasto(risultato: dict) -> dict:
         "promosse_AA": promosse,
         "peggior_rapporto": round(peggiore, 2),
     }
+
+
+def elimina_progetto(slug: str) -> bool:
+    """Cancella del tutto la cartella di un progetto (immagine + analisi)."""
+    cartella = CARTELLA_PROGETTI / slug
+    if cartella.exists():
+        shutil.rmtree(cartella)
+        return True
+    return False
+
+
+# ===================== Confronti salvati (cartella confronti/) =====================
+CARTELLA_CONFRONTI = config.RADICE / "confronti"
+
+
+def salva_confronto(risultato: dict) -> dict:
+    """
+    Salva un confronto in confronti/<slug>/: confronto.json + COPIE delle due immagini.
+    Copiando le immagini, il confronto resta consultabile anche se in futuro i progetti
+    originali vengono eliminati. 'risultato' e' quello prodotto da agent.confronta_progetti.
+    """
+    CARTELLA_CONFRONTI.mkdir(exist_ok=True)
+    a, b = risultato["a"], risultato["b"]
+    base, n = f'{a["slug"]}-vs-{b["slug"]}', 2
+    slug = base
+    while (CARTELLA_CONFRONTI / slug).exists():
+        slug = f"{base}-{n}"; n += 1
+    cartella = CARTELLA_CONFRONTI / slug
+    cartella.mkdir()
+
+    suff_a = Path(a["immagine"]).suffix or ".png"
+    suff_b = Path(b["immagine"]).suffix or ".png"
+    shutil.copy(percorso_immagine(a["slug"]), cartella / ("a" + suff_a))
+    shutil.copy(percorso_immagine(b["slug"]), cartella / ("b" + suff_b))
+
+    dati = {
+        "slug": slug,
+        "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
+        "nome_a": a["nome"], "nome_b": b["nome"],
+        "img_a": "a" + suff_a, "img_b": "b" + suff_b,
+        "confronto": risultato["confronto"],
+        "contrasto_a": risultato["contrasto_a"],
+        "contrasto_b": risultato["contrasto_b"],
+        "tempo_s": risultato["tempo_s"],
+    }
+    (cartella / "confronto.json").write_text(
+        json.dumps(dati, indent=2, ensure_ascii=False), encoding="utf-8")
+    return dati
+
+
+def carica_confronto(slug: str):
+    """Rilegge un confronto salvato (None se non esiste)."""
+    percorso = CARTELLA_CONFRONTI / slug / "confronto.json"
+    return json.loads(percorso.read_text(encoding="utf-8")) if percorso.exists() else None
+
+
+def elenco_confronti() -> list:
+    """Tutti i confronti salvati, dal piu' recente."""
+    if not CARTELLA_CONFRONTI.exists():
+        return []
+    confronti = [carica_confronto(c.name) for c in CARTELLA_CONFRONTI.iterdir() if c.is_dir()]
+    confronti = [c for c in confronti if c]
+    confronti.sort(key=lambda c: (CARTELLA_CONFRONTI / c["slug"]).stat().st_mtime, reverse=True)
+    return confronti
+
+
+def percorso_immagine_confronto(slug: str, quale: str) -> Path:
+    """Percorso di una delle due immagini salvate per un confronto ('a' oppure 'b')."""
+    con = carica_confronto(slug)
+    nome = con["img_a"] if quale == "a" else con["img_b"]
+    return CARTELLA_CONFRONTI / slug / nome

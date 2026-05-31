@@ -62,9 +62,12 @@
 
     /* Griglia progetti */
     .griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
-    .card{background:#fff;border:1px solid var(--bordo);border-radius:14px;overflow:hidden;cursor:pointer;
-          box-shadow:var(--ombra);transition:.15s}
+    .card{position:relative;background:#fff;border:1px solid var(--bordo);border-radius:14px;overflow:hidden;
+          cursor:pointer;box-shadow:var(--ombra);transition:.15s}
     .card:hover{transform:translateY(-2px);border-color:var(--primario)}
+    .elimina{position:absolute;top:8px;right:8px;z-index:2;width:26px;height:26px;border:none;border-radius:50%;
+             background:rgba(20,24,40,.55);color:#fff;cursor:pointer;font-size:13px;line-height:26px;text-align:center;padding:0}
+    .elimina:hover{background:var(--ko)}
     .card-img{height:120px;background-size:cover;background-position:top center;background-color:#eef0f5}
     .card-body{padding:12px 14px}
     .card-nome{font-weight:700}
@@ -76,6 +79,10 @@
     .confronta-scelte{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
     .confronta-scelte select{flex:1;min-width:160px;padding:10px;border:1px solid var(--bordo);border-radius:10px;font-size:14px}
     .vs{font-weight:700;color:var(--grigio)}
+    .lista-confronti{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .conf-riga{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff;
+               border:1px solid var(--bordo);border-radius:10px;padding:10px 14px;cursor:pointer}
+    .conf-riga:hover{border-color:var(--primario)}
 
     /* ---- Stili del REPORT (usati dai frammenti iniettati) ---- */
     .report{background:#fff;border:1px solid var(--bordo);border-radius:16px;padding:22px;margin-top:18px;box-shadow:var(--ombra)}
@@ -185,6 +192,9 @@
         <p class="fonte">Scegli due progetti già analizzati: l'agente li mette a confronto.</p>
       </div>
       <div id="risultatoConfronto"></div>
+
+      <h3 style="margin-top:24px">Confronti salvati</h3>
+      <div id="listaConfronti" class="lista-confronti"></div>
     </section>
   </main>
 
@@ -257,6 +267,10 @@
       const g = document.getElementById('grigliaProgetti');
       g.innerHTML = lista.map(cardProgetto).join('');
       g.querySelectorAll('.card').forEach(c => c.addEventListener('click', () => vediProgetto(c.dataset.slug)));
+      g.querySelectorAll('.elimina').forEach(b => b.addEventListener('click', e => {
+        e.stopPropagation();                       // non aprire il dettaglio
+        eliminaProgetto(b.dataset.slug);
+      }));
       const opzioni = lista.map(p => `<option value="${p.slug}">${p.nome}</option>`).join('');
       selA.innerHTML = opzioni; selB.innerHTML = opzioni;
       if (lista.length > 1) selB.selectedIndex = 1;
@@ -264,6 +278,7 @@
     function cardProgetto(p){
       const c = p.contrasto;
       return `<div class="card" data-slug="${p.slug}">
+        <button class="elimina" data-slug="${p.slug}" title="Elimina progetto">✕</button>
         <div class="card-img" style="background-image:url('${p.img_url}')"></div>
         <div class="card-body">
           <div class="card-nome">${p.nome}</div>
@@ -275,6 +290,11 @@
       const html = await (await fetch('/progetto/' + slug)).text();
       document.getElementById('modaleContenuto').innerHTML = html;
       document.getElementById('modale').hidden = false;
+    }
+    async function eliminaProgetto(slug){
+      if (!confirm("Eliminare questo progetto? Cancella anche la sua cartella, l'azione non è reversibile.")) return;
+      await fetch('/elimina-progetto/' + slug, {method: 'POST'});
+      caricaProgetti();   // aggiorna griglia, contatore e menù del confronto
     }
     document.getElementById('aggiorna').addEventListener('click', caricaProgetti);
 
@@ -292,12 +312,31 @@
         const r = await fetch('/confronta', {method:'POST', body:fd});
         const html = await r.text();
         document.getElementById('risultatoConfronto').innerHTML = r.ok ? html : '<p class="errore">'+html+'</p>';
+        if (r.ok) caricaConfronti();              // aggiorna la lista dei confronti salvati
       }catch(err){ document.getElementById('risultatoConfronto').innerHTML = '<p class="errore">Errore: '+err+'</p>'; }
       finally{ fineAttesa(); document.getElementById('risultatoConfronto').scrollIntoView({behavior:'smooth'}); }
     });
 
-    // Carica i progetti all'apertura
+    // ---------- Confronti salvati ----------
+    async function caricaConfronti(){
+      const lista = await (await fetch('/api/confronti')).json();
+      const el = document.getElementById('listaConfronti');
+      if (!lista.length){ el.innerHTML = '<p class="fonte">Ancora nessun confronto salvato.</p>'; return; }
+      el.innerHTML = lista.map(c => `<div class="conf-riga" data-slug="${c.slug}">
+          <span><b>${c.nome_a}</b> vs <b>${c.nome_b}</b></span>
+          <span class="fonte">${c.data} · vince ${c.vincitore}</span>
+        </div>`).join('');
+      el.querySelectorAll('.conf-riga').forEach(r => r.addEventListener('click', () => vediConfrontoSalvato(r.dataset.slug)));
+    }
+    async function vediConfrontoSalvato(slug){
+      const html = await (await fetch('/confronto/' + slug)).text();
+      document.getElementById('modaleContenuto').innerHTML = html;
+      document.getElementById('modale').hidden = false;
+    }
+
+    // Carica progetti e confronti salvati all'apertura
     caricaProgetti();
+    caricaConfronti();
   </script>
 </body>
 </html>

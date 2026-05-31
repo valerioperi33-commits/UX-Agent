@@ -19,6 +19,9 @@ uploads/
 # --- Progetti salvati dall'utente (immagini + report) ---
 progetti/
 
+# --- Confronti salvati dall'utente (immagini + esito) ---
+confronti/
+
 # --- File di sistema macOS ---
 .DS_Store
 

@@ -139,12 +139,12 @@ def scalda_modello() -> None:
         buffer = io.BytesIO()
         Image.new("RGB", (lato, int(lato * 0.66)), "#808080").save(buffer, format="PNG")
         dati = buffer.getvalue()
-        # Tre passate: la 1a carica il modello da disco, le altre portano la GPU
-        # "a regime" (a freddo le prime analisi sarebbero piu' lente).
+        client = _client_ollama()
+        # 3 passate con un'immagine: caricano il modello e portano la GPU "a regime".
+        # (Il confronto non serve scaldarlo: lavora solo su testo, quindi è già veloce.)
         for _ in range(3):
-            _client_ollama().chat(
-                model=config.MODELLO_VISION,
-                format="json",
+            client.chat(
+                model=config.MODELLO_VISION, format="json",
                 keep_alive=config.OLLAMA_KEEP_ALIVE,
                 options={"temperature": 0.2, "num_predict": 8},
                 messages=[
@@ -238,11 +238,44 @@ def analizza_screenshot(percorso_immagine: Path) -> dict:
     }
 
 
+def _riassunto_progetto(progetto: dict, rc: dict) -> str:
+    """Schedina testuale di un progetto (giudizio + contrasto), per il confronto."""
+    q = progetto["risultato"].get("qualitativo", {})
+    campi = [("gerarchia_visiva", "Gerarchia visiva"), ("leggibilita", "Leggibilità"),
+             ("chiarezza_cta", "Chiarezza CTA"), ("criticita_accessibilita", "Criticità"),
+             ("note", "Note")]
+    righe = []
+    for chiave, etichetta in campi:
+        valore = q.get(chiave)
+        if isinstance(valore, list):
+            valore = "; ".join(valore)
+        if valore:
+            righe.append(f"- {etichetta}: {valore}")
+    righe.append(f"- Contrasto (misurato dai tool): {rc['promosse_AA']}/{rc['totale']} "
+                 f"testi superano AA, rapporto peggiore {rc['peggior_rapporto']}:1")
+    return "\n".join(righe)
+
+
+def _verdetto_accessibilita(rc_a: dict, rc_b: dict, nome_a: str, nome_b: str) -> str:
+    """
+    Decide DETERMINISTICAMENTE chi e' piu' accessibile (dai numeri dei tool), perche'
+    il modello e' debole nel ragionare sui numeri. Confronta la quota di testi che
+    superano l'AA; differenze piccole = "simili".
+    """
+    fa = rc_a["promosse_AA"] / rc_a["totale"] if rc_a["totale"] else 0
+    fb = rc_b["promosse_AA"] / rc_b["totale"] if rc_b["totale"] else 0
+    if abs(fa - fb) < 0.10:
+        return "per contrasto/accessibilità i due progetti sono simili."
+    migliore = ("A", nome_a) if fa > fb else ("B", nome_b)
+    return (f'per contrasto/accessibilità è migliore il Progetto {migliore[0]} '
+            f'("{migliore[1]}"): più testi superano l\'AA.')
+
+
 def confronta_progetti(slug_a: str, slug_b: str) -> dict:
     """
-    Confronta due progetti gia' salvati.
-      - CERVELLO: il modello guarda ENTRAMBE le immagini e le confronta a parole.
-      - MANI: affianchiamo i dati di contrasto gia' calcolati (numeri dai tool, non dal modello).
+    Confronta due progetti GIA' analizzati. È veloce perché NON rianalizza le immagini:
+    il modello confronta (solo testo) le due SCHEDE già prodotte, più i numeri dei tool.
+    Anti-allucinazione: i numeri restano quelli dei tool; il modello giudica a parole.
     """
     import progetti                                  # qui dentro per evitare cicli all'avvio
 
@@ -253,18 +286,15 @@ def confronta_progetti(slug_a: str, slug_b: str) -> dict:
 
     rc_a = progetti.riepilogo_contrasto(a["risultato"])
     rc_b = progetti.riepilogo_contrasto(b["risultato"])
-    img_a = _immagine_per_modello(progetti.percorso_immagine(slug_a))
-    img_b = _immagine_per_modello(progetti.percorso_immagine(slug_b))
+    verdetto = _verdetto_accessibilita(rc_a, rc_b, a["nome"], b["nome"])
 
-    # Diamo al modello i numeri di contrasto GIA' calcolati dai tool: cosi' il giudizio
-    # sull'accessibilita' e' ancorato ai fatti (il modello non li reinventa).
     contesto = (
-        f'Confronta queste due interfacce reali. La PRIMA immagine e\' il Progetto A '
-        f'("{a["nome"]}"), la SECONDA e\' il Progetto B ("{b["nome"]}"). '
-        "Descrivi SOLO cio\' che vedi in QUESTE due immagini. "
-        "Dati di contrasto gia\' misurati dai tool (usali, non ricalcolarli): "
-        f'A = {rc_a["promosse_AA"]}/{rc_a["totale"]} testi superano AA, peggiore {rc_a["peggior_rapporto"]}:1; '
-        f'B = {rc_b["promosse_AA"]}/{rc_b["totale"]} testi superano AA, peggiore {rc_b["peggior_rapporto"]}:1.'
+        "Confronta due interfacce GIA' ANALIZZATE, basandoti SOLO su queste schede.\n\n"
+        f'PROGETTO A — "{a["nome"]}":\n{_riassunto_progetto(a, rc_a)}\n\n'
+        f'PROGETTO B — "{b["nome"]}":\n{_riassunto_progetto(b, rc_b)}\n\n'
+        f"DATO OGGETTIVO DAI TOOL (non discuterlo): {verdetto} Usa questo per il campo "
+        "accessibilita e tienine molto conto per il vincitore.\n\n"
+        "Compila il JSON di confronto richiesto."
     )
 
     t0 = time.perf_counter()
@@ -275,7 +305,7 @@ def confronta_progetti(slug_a: str, slug_b: str) -> dict:
         options={"temperature": 0.2, "num_predict": config.MAX_TOKEN_RISPOSTA + 120},
         messages=[
             {"role": "system", "content": _leggi_prompt("confronto_prompt")},
-            {"role": "user", "content": contesto, "images": [img_a, img_b]},
+            {"role": "user", "content": contesto},   # SOLO testo: nessuna immagine = veloce
         ],
     )
     confronto = _carica_json_robusto(risposta["message"]["content"])

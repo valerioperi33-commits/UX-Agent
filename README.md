@@ -128,13 +128,17 @@ L'interfaccia è organizzata in tre schede:
 1. **Nuova analisi** — scrivi un **nome progetto**, poi trascina lo screenshot. Al
    termine il progetto viene **salvato** in `progetti/<nome>/` (immagine + `analisi.json`).
 2. **Progetti fatti** — la galleria delle analisi salvate: si **aggiorna da sola** a ogni
-   nuova analisi. Clicca una scheda per rivedere il report completo.
+   nuova analisi. Clicca una scheda per rivedere il report; la **×** in alto a destra di
+   una scheda **elimina** il progetto (e la sua cartella).
 3. **Confronta** — scegli **due** progetti già fatti e l'agente li mette a confronto:
-   giudizio aspetto per aspetto (gerarchia, leggibilità, CTA, accessibilità) con un
-   "vincitore", più il confronto dei numeri di contrasto.
+   giudizio aspetto per aspetto con un "vincitore", più il confronto dei numeri di
+   contrasto. Ogni confronto viene **salvato** in `confronti/<slug>/` e compare nella lista
+   "Confronti salvati" (cliccabile per rivederlo).
 
 Vale sempre la regola d'oro: il modello **confronta a parole**, i **numeri di contrasto**
-restano quelli calcolati dai tool.
+restano quelli dei tool. Per essere veloce, il confronto **non rianalizza le immagini**:
+mette a confronto le due schede già prodotte (operazione di solo testo, ~5–8 s). Inoltre
+"chi è più accessibile" lo decidono i **numeri** (più testi che superano l'AA), non il modello.
 
 ---
 
@@ -191,7 +195,8 @@ Per cambiare modello: `ollama pull <nome>` e poi aggiorna `MODELLO_VISION` in `.
 │   └── ocr.py                 # trova il testo e ne campiona i colori reali
 ├── screens/           # screenshot per l'uso da terminale
 ├── uploads/           # file temporaneo dell'immagine caricata (creato in automatico)
-└── progetti/          # un sottocartella per progetto: immagine + analisi.json
+├── progetti/          # una sottocartella per progetto: immagine + analisi.json
+└── confronti/         # una sottocartella per confronto: due immagini + confronto.json
 ```
 
 ---

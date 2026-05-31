@@ -82,15 +82,60 @@ def vedi_progetto(slug):
 
 @app.route("/confronta", methods=["POST"])
 def confronta():
-    """Confronta due progetti scelti dall'utente."""
+    """Confronta due progetti scelti dall'utente e SALVA il confronto in confronti/."""
     a, b = request.form.get("a"), request.form.get("b")
     if not a or not b or a == b:
         return "Scegli due progetti diversi.", 400
     try:
         risultato = confronta_progetti(a, b)
+        con = progetti.salva_confronto(risultato)        # salva in confronti/<slug>/
     except Exception as errore:
         return f"Non riesco a confrontare: {errore}", 400
-    return render_template("confronto.html", c=risultato)
+    return _rendi_confronto(con)
+
+
+def _rendi_confronto(con: dict):
+    """Disegna un confronto (appena fatto o salvato) usando le sue immagini salvate."""
+    return render_template("confronto.html", c=con,
+                           img_a=f"/confronto-immagine/{con['slug']}/a",
+                           img_b=f"/confronto-immagine/{con['slug']}/b")
+
+
+@app.route("/api/confronti")
+def api_confronti():
+    """Elenco dei confronti salvati (per la lista nella scheda 'Confronta')."""
+    elenco = [{
+        "slug": c["slug"], "data": c["data"],
+        "nome_a": c["nome_a"], "nome_b": c["nome_b"],
+        "vincitore": c.get("confronto", {}).get("vincitore", "?"),
+    } for c in progetti.elenco_confronti()]
+    return jsonify(elenco)
+
+
+@app.route("/confronto/<slug>")
+def vedi_confronto(slug):
+    """Rivede un confronto salvato."""
+    con = progetti.carica_confronto(slug)
+    if not con:
+        abort(404)
+    return _rendi_confronto(con)
+
+
+@app.route("/confronto-immagine/<slug>/<quale>")
+def immagine_confronto(slug, quale):
+    """Serve una delle due immagini salvate di un confronto ('a' oppure 'b')."""
+    con = progetti.carica_confronto(slug)
+    if not con or quale not in ("a", "b"):
+        abort(404)
+    nome = con["img_a"] if quale == "a" else con["img_b"]
+    return send_from_directory(progetti.CARTELLA_CONFRONTI / slug, nome)
+
+
+@app.route("/elimina-progetto/<slug>", methods=["POST"])
+def elimina(slug):
+    """Elimina un progetto e la sua cartella."""
+    progetti.elimina_progetto(slug)
+    return ("", 204)
 
 
 @app.route("/immagine/<slug>")

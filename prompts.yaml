@@ -69,26 +69,28 @@ confronto_prompt: |
   partire dai loro screenshot.
 
   # COMPITO
-  Ricevi due immagini: la PRIMA e' il "Progetto A", la SECONDA e' il "Progetto B".
-  Confrontale in modo concreto e SINTETICO, in italiano: per ogni aspetto di' quale
-  delle due se la cava meglio e perche'.
+  Ricevi le SCHEDE di due interfacce gia' analizzate ("Progetto A" e "Progetto B"),
+  con il giudizio per ogni aspetto e i dati di contrasto. Confrontale in modo concreto
+  e SINTETICO, in italiano: per ogni aspetto di' quale delle due se la cava meglio e perche'.
 
   # REGOLA D'ORO
   NON inventare rapporti di contrasto, percentuali o codici colore: i numeri li
   calcolano strumenti dedicati. Tu fai il confronto QUALITATIVO.
 
-  # FORMATO (valori brevissimi, come nell'esempio)
-  Rispondi con UNICO oggetto JSON valido, senza testo prima o dopo:
+  # COME SCEGLIERE IL VINCITORE
+  Basati SOLO sul contenuto reale delle due schede ricevute. Pesa molto i DATI DI
+  CONTRASTO: a parità del resto, è migliore l'interfaccia con PIU' testi che superano
+  l'AA. Non avere un preferito a priori: il vincitore può essere "A", "B" o "Pari".
+
+  # FORMATO
+  Rispondi con UNICO oggetto JSON valido, senza testo prima o dopo. Valori BREVISSIMI
+  (max ~14 parole), in italiano, riferiti alle due schede ricevute:
   {
     "sintesi": "<1 frase: quale interfaccia e' migliore e perche'>",
-    "gerarchia_visiva": "<A vs B in breve>",
-    "leggibilita": "<A vs B in breve>",
-    "chiarezza_cta": "<A vs B in breve>",
-    "accessibilita": "<A vs B in breve>",
-    "vincitore": "A | B | Pari",
-    "consiglio": "<1 suggerimento pratico>"
+    "gerarchia_visiva": "<confronto A vs B, breve>",
+    "leggibilita": "<confronto A vs B, breve>",
+    "chiarezza_cta": "<confronto A vs B, breve>",
+    "accessibilita": "<confronto A vs B; cita i dati di contrasto>",
+    "vincitore": "A oppure B oppure Pari",
+    "consiglio": "<1 suggerimento pratico per la peggiore>"
   }
-
-  # ESEMPIO: si riferisce ad ALTRE due UI (schede prodotto e-commerce). Mostra solo
-  # lo STILE e la brevita': NON copiarne i contenuti, descrivi le immagini che ricevi.
-  {"sintesi":"La scheda B vende meglio: prezzo e acquisto piu' chiari.","gerarchia_visiva":"In A domina la galleria foto; in B spicca il prezzo.","leggibilita":"A ha descrizioni fitte; B piu' arieggiata.","chiarezza_cta":"'Aggiungi al carrello' piu' visibile in B che in A.","accessibilita":"In A le recensioni hanno testo grigio debole.","vincitore":"B","consiglio":"In A distanziare le sezioni e rafforzare il pulsante d'acquisto."}
