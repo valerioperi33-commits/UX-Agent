@@ -88,6 +88,10 @@ def costruisci_markdown(risultati: list) -> str:
 
     for r in risultati:
         testo += f"---\n\n## 🖼 {r['immagine']}\n\n"
+        if r.get("tempi"):
+            t = r["tempi"]
+            testo += (f"_⏱️ Tempo di analisi: modello {t['modello_s']}s + "
+                      f"strumenti {t['strumenti_s']}s = {t['totale_s']}s_\n\n")
         testo += "### Valutazione qualitativa (modello vision)\n\n"
         testo += _sezione_qualitativa(r["qualitativo"]) + "\n"
         testo += "### Misure oggettive di contrasto (tool WCAG)\n\n"

@@ -47,14 +47,15 @@ Queste istruzioni servono anche per far girare il progetto **sul secondo Mac da 
 
 ### 1) Ollama e il modello vision
 Installa Ollama da <https://ollama.com> (oppure `brew install ollama`), poi scarica il
-modello:
+modello **veloce** (predefinito, ottimo per la dimostrazione):
 
 ```bash
-ollama pull qwen2.5vl:7b
+ollama pull qwen2.5vl:3b
 ```
 
 > Il primo download è di alcuni GB e si fa **una volta sola**. Assicurati che Ollama
 > sia in esecuzione (apri l'app Ollama, oppure lancia `ollama serve` in un terminale).
+> Se in futuro vuoi un'analisi più ricca (ma più lenta): `ollama pull qwen2.5vl:7b`.
 
 ### 2) Tesseract (per l'OCR)
 ```bash
@@ -77,8 +78,8 @@ pip install -r requirements.txt # installa le librerie elencate
 ```bash
 cp .env.example .env
 ```
-Apri `.env` e, se serve, cambia il modello (vedi la tabella RAM qui sotto). Il file
-`.env` **non** va su GitHub: così ogni Mac tiene le sue impostazioni.
+Apri `.env` e, se serve, cambia il modello (vedi la sezione "Velocità" qui sotto). Il
+file `.env` **non** va su GitHub: così ogni Mac tiene le sue impostazioni.
 
 ### 5) Avvio
 Metti uno o più screenshot (`.png`, `.jpg`) nella cartella `screens/`, poi:
@@ -106,27 +107,44 @@ Due modi per avviarla:
   python app.py
   ```
 
-Il browser si apre da solo su <http://127.0.0.1:5000>: **trascina uno screenshot** nel
-riquadro e, dopo qualche decina di secondi, compare il report con anteprima dell'immagine,
+Il browser si apre da solo su <http://127.0.0.1:5001>: **trascina uno screenshot** nel
+riquadro e in circa **6–8 secondi** compare il report con anteprima dell'immagine,
 giudizio qualitativo, palette a colori e tabella dei contrasti con esiti AA/AAA.
 
+> 💡 **Per la dimostrazione:** all'avvio l'app "pre-riscalda" il modello. Aspetta che nel
+> Terminale compaia **"✅ Modello pronto"** (qualche decina di secondi) prima di trascinare
+> il primo screenshot: da quel momento ogni analisi è veloce.
+
 Anche l'interfaccia gira **solo in locale**: nessun dato esce dal computer. Per fermarla,
-premi `CTRL+C` nella finestra del Terminale.
+premi `CTRL+C` nella finestra del Terminale. (La porta è la **5001**, non la 5000: su
+macOS la 5000 è occupata dal "Ricevitore AirPlay". Si può cambiare con `PORTA` in `.env`.)
 
 ---
 
-## Scegliere il modello in base alla RAM
+## Velocità e scelta del modello
 
-Il modello si imposta **solo** nel file `.env` (variabile `MODELLO_VISION`): nessuna
-modifica al codice.
+Tutto si imposta nel file `.env` (nessuna modifica al codice). Il progetto è già
+configurato per essere **veloce**: con il modello caldo, un'analisi richiede circa
+**6–8 secondi**.
 
-| RAM del Mac | Modello consigliato | Note |
+| Obiettivo | `MODELLO_VISION` | Tempo indicativo* |
 |---|---|---|
-| **16 GB o più** | `qwen2.5vl:7b` | scelta consigliata, ottimo sulle UI |
-| **8 GB** | `qwen2.5vl:7b` | funziona ma **lento**: chiudi le altre app |
-| **8 GB** (alternative più leggere) | `llava:7b` oppure `qwen2.5vl:3b` | meno preciso ma più veloce/leggero |
+| **Veloce (demo)** — predefinito | `qwen2.5vl:3b` | ~6–8 s |
+| **Più qualità, più lento** | `qwen2.5vl:7b` | ~15–25 s |
+| **8 GB di RAM** | `qwen2.5vl:3b` (consigliato) | un po' più lento |
 
-Per cambiare modello: `ollama pull <nome-modello>` e poi aggiorna `MODELLO_VISION` in `.env`.
+*Misurato su MacBook Air M3 (16 GB), modello già "caldo".
+
+Le altre "manopole" di velocità nel `.env`:
+- `LATO_MAX_MODELLO` — rimpicciolisce l'immagine **data al modello** (meno pixel = più
+  veloce). I tool WCAG usano comunque sempre l'immagine a piena risoluzione.
+- `MAX_TOKEN_RISPOSTA` — tetto alla lunghezza della risposta del modello.
+- `OLLAMA_KEEP_ALIVE` — quanto tiene il modello in memoria tra un'analisi e l'altra.
+
+Come funziona la velocità (in breve): immagine ridotta + risposta sintetica (con un
+esempio nel prompt) + modello "tenuto caldo" e pre-riscaldato all'avvio dell'interfaccia.
+
+Per cambiare modello: `ollama pull <nome>` e poi aggiorna `MODELLO_VISION` in `.env`.
 
 ---
 

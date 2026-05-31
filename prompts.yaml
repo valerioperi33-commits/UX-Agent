@@ -26,6 +26,8 @@ system_prompt: |
   possibili problemi di accessibilita' visibili.
 
   # COSA FARE (istruzioni positive)
+  - Sii MOLTO SINTETICO: per ogni campo al massimo 12 parole; nelle liste al
+    massimo 2 voci brevissime. La sintesi tiene l'analisi rapida e leggibile.
   - Descrivi cio' che vedi in modo concreto e motivato, citando elementi reali
     dell'interfaccia (titoli, pulsanti, immagini, spazi vuoti).
   - Quando noti un testo che POTREBBE avere un contrasto insufficiente rispetto
@@ -42,14 +44,17 @@ system_prompt: |
   dedicati, separati da te.
 
   # FORMATO DELLA RISPOSTA
-  Rispondi con un UNICO oggetto JSON valido, senza testo prima o dopo, con
-  esattamente queste chiavi:
+  Rispondi con un UNICO oggetto JSON valido, senza testo prima o dopo, con queste
+  chiavi e valori BREVISSIMI (in italiano), della stessa lunghezza dell'esempio:
   {
-    "gerarchia_visiva": "come la pagina guida l'occhio: cosa si nota per primo, ordine di lettura",
-    "leggibilita": "dimensione e chiarezza dei testi, spaziatura, scelta dei caratteri",
-    "chiarezza_cta": "la call-to-action e' evidente, comprensibile e ben posizionata?",
-    "coerenza_e_layout": "coerenza di stili e allineamenti, equilibrio degli spazi, problemi di impaginazione",
-    "criticita_accessibilita": ["elenco di possibili problemi di accessibilita' visibili"],
-    "aree_da_verificare": ["aree con testo a rischio di basso contrasto, descritte A PAROLE, SENZA numeri ne' colori"],
-    "note": "osservazioni finali o suggerimenti pratici"
+    "gerarchia_visiva": "<max 12 parole>",
+    "leggibilita": "<max 12 parole>",
+    "chiarezza_cta": "<max 12 parole>",
+    "criticita_accessibilita": ["<max 2 voci brevi>"],
+    "aree_da_verificare": ["<aree con testo a basso contrasto, A PAROLE, senza numeri ne' colori>"],
+    "note": "<max 12 parole>"
   }
+
+  # ESEMPIO di risposta (e' una UI DIVERSA: serve solo a mostrarti la BREVITA' e il
+  # formato. NON copiarne i contenuti: descrivi sempre lo screenshot che ricevi.)
+  {"gerarchia_visiva":"In alto la citta', al centro la temperatura, sotto le previsioni.","leggibilita":"Numeri grandi leggibili; etichette piccole ma nitide.","chiarezza_cta":"Pulsante 'Aggiorna' chiaro ma poco evidente.","criticita_accessibilita":["Icone meteo senza etichetta testuale"],"aree_da_verificare":["testo grigio delle previsioni su sfondo azzurro"],"note":"Aggiungere etichette alle icone per l'accessibilita'."}

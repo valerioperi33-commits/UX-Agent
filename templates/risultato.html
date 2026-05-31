@@ -2,6 +2,10 @@
    Usa gli stessi dati che l'agente produce per il terminale: qui cambia solo la veste. #}
 <div class="report">
   <h2>📋 Report — {{ nome }}</h2>
+  {% if r.tempi %}
+    <p class="fonte">⏱️ Tempo di analisi: modello <b>{{ r.tempi.modello_s }}s</b>
+       + strumenti <b>{{ r.tempi.strumenti_s }}s</b> = <b>{{ r.tempi.totale_s }}s</b></p>
+  {% endif %}
 
   <div class="due-colonne">
     <div class="anteprima">

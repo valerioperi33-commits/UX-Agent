@@ -98,8 +98,8 @@
 
   <div id="overlay">
     <div class="spinner"></div>
-    <div><b>Analisi in corso…</b></div>
-    <div style="color:#5b6270">Il modello vision può metterci da 20 a 60 secondi.</div>
+    <div><b>Analisi in corso…</b> <span id="tempo">0s</span></div>
+    <div style="color:#5b6270">Il modello sta valutando lo screenshot.</div>
   </div>
 
   <script>
@@ -118,10 +118,19 @@
     dz.addEventListener('click', () => input.click());
     input.addEventListener('change', () => { if (input.files[0]) analizza(input.files[0]); });
 
+    let cronometro;
     async function analizza(file) {
       if (!file.type.startsWith('image/')) { alert("Trascina un'immagine (PNG o JPG)."); return; }
       overlay.style.display = 'flex';
       result.innerHTML = '';
+      // Cronometro a video: rassicura durante l'attesa (utile in demo).
+      const tempoEl = document.getElementById('tempo');
+      const inizio = Date.now();
+      tempoEl.textContent = '0s';
+      cronometro = setInterval(() => {
+        tempoEl.textContent = ((Date.now() - inizio) / 1000).toFixed(0) + 's';
+      }, 250);
+
       const dati = new FormData();
       dati.append('immagine', file);
       try {
@@ -131,6 +140,7 @@
       } catch (err) {
         result.innerHTML = '<p class="errore">Errore di rete: ' + err + '</p>';
       } finally {
+        clearInterval(cronometro);
         overlay.style.display = 'none';
         result.scrollIntoView({ behavior: 'smooth' });
       }

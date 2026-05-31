@@ -9,11 +9,14 @@ Mette in fila i tre pezzi dell'agente per ogni screenshot:
 Regola d'oro rispettata alla lettera: il modello non produce MAI numeri di
 contrasto ne' codici colore; quei dati nascono solo dai tool che leggono i pixel.
 """
+import io
 import json
+import time
 from pathlib import Path
 
 import yaml
 import ollama
+from PIL import Image
 
 import config
 from registry import scopri_tool
@@ -54,12 +57,30 @@ def verifica_modello() -> tuple:
     return True, f"Ollama ok, modello '{config.MODELLO_VISION}' pronto."
 
 
+def _immagine_per_modello(percorso_immagine: Path) -> bytes:
+    """
+    Prepara l'immagine per il modello: la rimpicciolisce (se piu' grande del limite
+    in config) e la restituisce come byte PNG. Meno pixel = il modello la elabora
+    molto piu' in fretta, senza perdere le informazioni utili al giudizio.
+    """
+    immagine = Image.open(percorso_immagine).convert("RGB")
+    if config.LATO_MAX_MODELLO:
+        immagine.thumbnail((config.LATO_MAX_MODELLO, config.LATO_MAX_MODELLO))
+    buffer = io.BytesIO()
+    immagine.save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
 def giudizio_qualitativo(percorso_immagine: Path) -> dict:
     """STADIO 1 — Il cervello: chiede al modello vision il giudizio qualitativo."""
     risposta = _client_ollama().chat(
         model=config.MODELLO_VISION,
         format="json",                       # chiediamo a Ollama una risposta JSON
-        options={"temperature": 0.2},        # poca "fantasia" = giudizio piu' stabile
+        keep_alive=config.OLLAMA_KEEP_ALIVE,  # tiene il modello "caldo" in memoria
+        options={
+            "temperature": 0.2,              # poca "fantasia" = giudizio piu' stabile
+            "num_predict": config.MAX_TOKEN_RISPOSTA,  # risposta corta = piu' veloce
+        },
         messages=[
             {"role": "system", "content": carica_system_prompt()},
             {
@@ -69,17 +90,65 @@ def giudizio_qualitativo(percorso_immagine: Path) -> dict:
                     "nel formato JSON richiesto. Ricorda: NON inventare numeri di "
                     "contrasto ne' codici colore."
                 ),
-                # Passiamo i byte dell'immagine: nessuna ambiguita' sui percorsi.
-                "images": [Path(percorso_immagine).read_bytes()],
+                "images": [_immagine_per_modello(percorso_immagine)],
             },
         ],
     )
-    testo = risposta["message"]["content"]
+    return _carica_json_robusto(risposta["message"]["content"])
+
+
+def _carica_json_robusto(testo: str) -> dict:
+    """
+    Converte in dizionario la risposta del modello. Se il JSON e' stato TRONCATO
+    (perche' abbiamo messo un tetto ai token per restare veloci), prova a "ripararlo"
+    chiudendo virgolette e parentesi rimaste aperte. Se proprio non ci riesce, non
+    perde il contenuto: lo restituisce grezzo.
+    """
     try:
         return json.loads(testo)
     except json.JSONDecodeError:
-        # Se per qualche motivo non fosse JSON valido, non perdiamo il contenuto.
+        pass
+
+    riparato = testo
+    if riparato.count('"') % 2 == 1:                 # virgoletta aperta -> chiudila
+        riparato += '"'
+    riparato += "]" * (riparato.count("[") - riparato.count("]"))   # chiudi le liste
+    riparato += "}" * (riparato.count("{") - riparato.count("}"))   # chiudi gli oggetti
+    try:
+        return json.loads(riparato)
+    except json.JSONDecodeError:
         return {"_grezzo": testo, "_errore": "Il modello non ha restituito JSON valido."}
+
+
+def scalda_modello() -> None:
+    """
+    Carica il modello in memoria con una richiesta minima ("pre-riscaldamento"),
+    cosi' la PRIMA analisi vera parte gia' calda. Utile per le dimostrazioni:
+    si lancia all'avvio dell'interfaccia (vedi app.py).
+    """
+    try:
+        # Riscaldiamo con una chiamata IDENTICA a quella vera (stesso prompt, immagine
+        # della stessa dimensione, stesso formato): cosi' il costo una-tantum di
+        # inizializzazione del percorso vision lo paghiamo ORA, non alla prima analisi.
+        lato = config.LATO_MAX_MODELLO or 512
+        buffer = io.BytesIO()
+        Image.new("RGB", (lato, int(lato * 0.66)), "#808080").save(buffer, format="PNG")
+        dati = buffer.getvalue()
+        # Tre passate: la 1a carica il modello da disco, le altre portano la GPU
+        # "a regime" (a freddo le prime analisi sarebbero piu' lente).
+        for _ in range(3):
+            _client_ollama().chat(
+                model=config.MODELLO_VISION,
+                format="json",
+                keep_alive=config.OLLAMA_KEEP_ALIVE,
+                options={"temperature": 0.2, "num_predict": 8},
+                messages=[
+                    {"role": "system", "content": carica_system_prompt()},
+                    {"role": "user", "content": "Rispondi solo: {}", "images": [dati]},
+                ],
+            )
+    except Exception:
+        pass        # se il modello non c'e' ancora, lo dira' la verifica all'avvio
 
 
 def _coppie_candidate(palette: list) -> list:
@@ -142,8 +211,13 @@ def analizza_screenshot(percorso_immagine: Path) -> dict:
     """Analisi completa di un singolo screenshot: unisce Stadio 1 e Stadio 2."""
     percorso_immagine = Path(percorso_immagine)
     tool = scopri_tool()                                  # le "mani" disponibili
-    qualitativo = giudizio_qualitativo(percorso_immagine)  # cervello
-    oggettivo = misure_oggettive(percorso_immagine, tool)  # mani
+
+    t0 = time.perf_counter()
+    qualitativo = giudizio_qualitativo(percorso_immagine)  # cervello (la parte lenta)
+    t1 = time.perf_counter()
+    oggettivo = misure_oggettive(percorso_immagine, tool)  # mani (veloci)
+    t2 = time.perf_counter()
+
     return {
         "immagine": percorso_immagine.name,
         "qualitativo": qualitativo,
@@ -151,4 +225,9 @@ def analizza_screenshot(percorso_immagine: Path) -> dict:
         "contrasto": oggettivo["contrasto"],
         "fonte_coppie": oggettivo["fonte_coppie"],
         "nota_ocr": oggettivo["nota_ocr"],
+        "tempi": {
+            "modello_s": round(t1 - t0, 1),
+            "strumenti_s": round(t2 - t1, 1),
+            "totale_s": round(t2 - t0, 1),
+        },
     }

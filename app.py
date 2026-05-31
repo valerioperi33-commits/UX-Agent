@@ -21,14 +21,14 @@ import webbrowser
 from flask import Flask, render_template, request, send_from_directory
 
 import config
-from agent import analizza_screenshot, verifica_modello
+from agent import analizza_screenshot, verifica_modello, scalda_modello
 
 # Cartella dove salviamo le immagini caricate dal browser.
 # La teniamo separata da screens/ (che resta la "casella" per l'uso da terminale).
 CARTELLA_UPLOAD = config.RADICE / "uploads"
 CARTELLA_UPLOAD.mkdir(exist_ok=True)
 
-INDIRIZZO = "http://127.0.0.1:5000"
+INDIRIZZO = f"http://127.0.0.1:{config.PORTA_INTERFACCIA}"
 
 app = Flask(__name__)
 
@@ -75,7 +75,16 @@ def _apri_browser():
 if __name__ == "__main__":
     print(f"· Interfaccia grafica avviata. Apri il browser su:  {INDIRIZZO}")
     print("  (premi CTRL+C in questo terminale per fermarla)")
+    # Pre-riscaldamento: carica e "accende" il modello in background, cosi' la prima
+    # analisi della demo parte gia' calda (e quindi veloce). Avvisa quando e' pronto.
+    print("· Pre-riscaldo il modello… (attendi il messaggio 'Pronto' prima di trascinare)", flush=True)
+
+    def _scalda_e_avvisa():
+        scalda_modello()
+        print("✅ Modello pronto: ora le analisi sono veloci. Trascina pure uno screenshot.", flush=True)
+
+    threading.Thread(target=_scalda_e_avvisa, daemon=True).start()
     if "--no-browser" not in sys.argv:
         _apri_browser()
     # threaded=True: la pagina e le immagini si caricano anche mentre il modello lavora.
-    app.run(host="127.0.0.1", port=5000, debug=False, threaded=True)
+    app.run(host="127.0.0.1", port=config.PORTA_INTERFACCIA, debug=False, threaded=True)
