@@ -1,8 +1,8 @@
-# agente-ux — Valutazione UX e accessibilità da screenshot (in locale)
+# UX Agent — Valutazione UX e accessibilità da screenshot (in locale)
 
-Agente AI che, dato lo **screenshot** di un'interfaccia, produce una **valutazione di
-UX e accessibilità di prima passata** in italiano. Gira **interamente in locale**:
-nessun dato esce dal computer.
+**UX Agent** è un agente AI che, dato lo **screenshot** di un'interfaccia, produce una
+**valutazione di UX e accessibilità di prima passata** in italiano. Gira **interamente
+in locale**: nessun dato esce dal computer. Interfaccia in **Material Design 3**.
 
 Progetto del corso magistrale **LM91 (UX/UI Design) — LUMSA**, per le materie di
 linguistica italiana, intelligenza artificiale e prompt design.
@@ -187,8 +187,11 @@ Per cambiare modello: `ollama pull <nome>` e poi aggiorna `MODELLO_VISION` in `.
 ├── main.py            # avvio DA TERMINALE: trova gli screenshot e lancia l'analisi
 ├── app.py             # avvio INTERFACCIA GRAFICA nel browser (app web locale)
 ├── desktop.py         # avvio come APP DESKTOP: stessa interfaccia in una finestra nativa
+├── crea_app.py        # crea "UX Agent.app" sulla Scrivania (icona + nome)
+├── icona.jpg          # logo di UX Agent (diventa l'icona dell'app)
 ├── avvia_interfaccia.command   # doppio click → interfaccia nel browser
 ├── avvia_app_desktop.command   # doppio click → app in finestra nativa
+├── installa_app.command        # doppio click → crea l'app sulla Scrivania
 ├── agent.py           # orchestrazione: analisi e confronto (parla col modello e usa i tool)
 ├── progetti.py        # salva/rilegge i "progetti" (immagine + report) nella cartella progetti/
 ├── config.py          # legge le impostazioni da .env
@@ -270,26 +273,83 @@ Da dichiarare con chiarezza, perché fa parte del rigore del progetto:
 
 ---
 
-## Pubblicare su GitHub
+## Avvio da terminale (utile per l'esame)
 
-Il repository è già inizializzato con un primo commit. Per pubblicarlo:
-
-```bash
-# 1) crea un repository vuoto su github.com (senza README), poi collega e invia:
-git remote add origin https://github.com/<tuo-utente>/agente-ux.git
-git branch -M main
-git push -u origin main
-```
-
-In alternativa, con la CLI di GitHub (`gh`):
+Se vi chiedono di avviarlo **solo da terminale**, senza app né browser:
 
 ```bash
-gh repo create agente-ux --public --source=. --remote=origin --push
+cd "Progetto Benedetti LM91"     # entra nella cartella del progetto
+source venv/bin/activate         # attiva l'ambiente (compare (venv) nel prompt)
+# assicurati che Ollama sia attivo: apri l'app Ollama, oppure:  ollama serve
+python main.py                   # analizza TUTTE le immagini in screens/, stampa e salva il report
 ```
 
-Il `.gitignore` esclude già `venv/`, `.env`, gli screenshot e i report generati.
+Per analizzare **una sola** immagine:
+
+```bash
+python main.py screens/esempio_landing.png
+```
+
+`main.py` stampa il report a video e lo salva in `report.md` e `report.json`. È la modalità
+"pura da terminale". (In alternativa: `python app.py` apre l'interfaccia nel browser,
+`python desktop.py` la apre in finestra nativa.)
+
+---
+
+## App sulla Scrivania (UX Agent.app)
+
+Per avere **UX Agent** come vera app con icona sulla Scrivania:
+
+```bash
+source venv/bin/activate
+python crea_app.py        # oppure doppio click su  installa_app.command
+```
+
+Crea `UX Agent.app` sulla Scrivania (icona presa da `icona.jpg`). Doppio click → si apre la
+finestra dell'app. **Va rifatto su ogni Mac** (il percorso del progetto cambia). Se macOS
+dice "sviluppatore non identificato": tasto destro sull'app → *Apri* → *Apri*.
+
+---
+
+## Trasferire tutto sull'altro Mac (via GitHub)
+
+### A) Da questo Mac — pubblica su GitHub (una volta sola)
+1. Su <https://github.com> crea un repository **vuoto** (senza README), es. `ux-agent`.
+2. Dalla cartella del progetto:
+   ```bash
+   git remote add origin https://github.com/<tuo-utente>/ux-agent.git
+   git branch -M main
+   git push -u origin main
+   ```
+   Al primo `push` GitHub chiede di autenticarti: usa il tuo utente e, come password, un
+   **token** (GitHub → *Settings* → *Developer settings* → *Personal access tokens*).
+3. In seguito basta `git push` dopo ogni modifica.
+
+### B) Sull'altro Mac — installa da zero
+1. **Prerequisiti** (una volta):
+   ```bash
+   brew install ollama tesseract       # motore del modello + OCR
+   ollama pull qwen2.5vl:3b            # il modello (alcuni GB, una volta sola)
+   ```
+   (In alternativa Ollama da ollama.com. Per l'italiano nell'OCR: `brew install tesseract-lang`.)
+2. **Scarica il progetto e prepara l'ambiente:**
+   ```bash
+   git clone https://github.com/<tuo-utente>/ux-agent.git
+   cd ux-agent
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   cp .env.example .env
+   ```
+3. **Prova:** `python main.py` (terminale) oppure `python app.py` (browser).
+4. (Facoltativo) `python crea_app.py` per avere l'icona di UX Agent sulla Scrivania anche lì.
+
+> Cosa **non** viaggia su GitHub (è nel `.gitignore`, va ricreato sul nuovo Mac): l'ambiente
+> `venv/`, il file `.env` (lo copi da `.env.example`) e le cartelle dati `progetti/`,
+> `confronti/`, `uploads/`, `screens/`. Codice, prompt, logo e istruzioni invece sì.
 
 ---
 
 ## Crediti
-Progetto LM91 (UX/UI Design) — LUMSA. Agente locale costruito con Python, Ollama e Tesseract.
+**UX Agent** — Progetto LM91 (UX/UI Design), LUMSA. Costruito con Python, Ollama, Tesseract,
+Flask e PyWebView; interfaccia in **Material Design 3**.

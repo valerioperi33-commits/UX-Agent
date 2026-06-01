@@ -39,6 +39,14 @@ def home():
     return render_template("index.html", ambiente_ok=ok, messaggio_ambiente=messaggio)
 
 
+@app.route("/logo")
+def logo():
+    """Serve il logo dell'app (mostrato nell'intestazione)."""
+    if not (config.RADICE / "icona.jpg").exists():
+        abort(404)
+    return send_from_directory(config.RADICE, "icona.jpg")
+
+
 @app.route("/analizza", methods=["POST"])
 def analizza():
     """Riceve immagine + nome progetto, analizza (stessa logica del terminale) e salva."""
