@@ -27,3 +27,6 @@ confronti/
 
 # --- Configurazione locale degli strumenti (anteprima, ecc.) ---
 .claude/
+
+# --- Log dell app desktop ---
+*.log

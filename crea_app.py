@@ -65,7 +65,8 @@ def crea_app():
     avvia.write_text(
         "#!/bin/bash\n"
         f'cd "{PROGETTO}" || exit 1\n'
-        f'exec "{PROGETTO}/venv/bin/python" desktop.py\n'
+        # Registriamo cosa succede in un log: se l'app non parte, l'errore e' qui.
+        f'exec "{PROGETTO}/venv/bin/python" desktop.py >> "{PROGETTO}/desktop_app.log" 2>&1\n'
     )
     avvia.chmod(0o755)
 
