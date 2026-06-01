@@ -278,7 +278,7 @@ Da dichiarare con chiarezza, perché fa parte del rigore del progetto:
 Se vi chiedono di avviarlo **solo da terminale**, senza app né browser:
 
 ```bash
-cd ~/"Progetto Benedetti LM91"   # entra nella cartella del progetto (si trova nella Home)
+cd ~/Desktop/"Progetto Benedetti LM91"   # entra nella cartella del progetto
 source venv/bin/activate         # attiva l'ambiente (compare (venv) nel prompt)
 # assicurati che Ollama sia attivo: apri l'app Ollama, oppure:  ollama serve
 python main.py                   # analizza TUTTE le immagini in screens/, stampa e salva il report
@@ -309,9 +309,13 @@ Crea `UX Agent.app` sulla Scrivania (icona presa da `icona.jpg`). Doppio click �
 finestra dell'app. **Va rifatto su ogni Mac** (il percorso del progetto cambia). Se macOS
 dice "sviluppatore non identificato": tasto destro sull'app → *Apri* → *Apri*.
 
-> ⚠️ **Importante:** perché l'app col doppio click funzioni, la cartella del progetto deve
-> stare **fuori** da Scrivania, Documenti e Download (cartelle che macOS protegge). Tienila
-> nella **Home** (`~/`), com'è ora. Da Terminale e nel browser invece funziona ovunque.
+> ⚠️ **macOS e la cartella Scrivania:** se il progetto sta sulla **Scrivania** (o in Documenti/
+> Download), l'app col **doppio click** non parte: macOS non lascia leggere quelle cartelle alle
+> app non firmate. Due strade: **(a)** dai a "UX Agent" l'**Accesso completo al disco**
+> (Impostazioni di sistema → Privacy e sicurezza → Accesso completo al disco → "+" → scegli l'app);
+> **oppure (b)** tieni il progetto in una cartella non protetta (es. la Home `~/`).
+> In ogni caso **Terminale e browser** (`python main.py` / `python app.py`) funzionano **sempre**,
+> ovunque sia la cartella — ed è il modo consigliato per la dimostrazione.
 
 ---
 
@@ -336,9 +340,8 @@ dice "sviluppatore non identificato": tasto destro sull'app → *Apri* → *Apri
    ollama pull qwen2.5vl:3b            # il modello (alcuni GB, una volta sola)
    ```
    (In alternativa Ollama da ollama.com. Per l'italiano nell'OCR: `brew install tesseract-lang`.)
-2. **Scarica il progetto nella Home** (NON sulla Scrivania, vedi la nota qui sopra) e prepara l'ambiente:
+2. **Scarica il progetto e prepara l'ambiente** (se vuoi l'app col doppio click, vedi la nota sopra: tienilo fuori dalle cartelle protette o concedi l'Accesso completo al disco):
    ```bash
-   cd ~                                   # vai nella Home (non Scrivania/Documenti/Download)
    git clone https://github.com/<tuo-utente>/ux-agent.git
    cd ux-agent
    python3 -m venv venv
