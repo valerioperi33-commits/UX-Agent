@@ -6,7 +6,7 @@ in locale**: nessun dato esce dal computer. Interfaccia in **Material Design 3**
 
 Progetto di **Valerio Peri** e **Shirin Qulaghasi** — corso magistrale **LM91 (UX/UI Design),
 LUMSA**, per le materie di linguistica italiana, intelligenza artificiale e prompt design.
-Sviluppato con l'agente AI **Claude Code**, come richiesto dal corso.
+Sviluppato con l'agente AI **Claude Code**.
 
 ---
 
@@ -365,5 +365,5 @@ si chiude quando chiudi l'app). **Va rifatto su ogni Mac** (il percorso del prog
 
 Autori: **Valerio Peri** e **Shirin Qulaghasi**.
 
-Sviluppato con l'assistenza di un agente AI (**Claude Code**), come previsto dal corso.
+Sviluppato con l'assistenza di un agente AI (**Claude Code**).
 Stack tecnico: Python, Ollama, Tesseract, Flask, PyWebView; interfaccia in **Material Design 3**.
