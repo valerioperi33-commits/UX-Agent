@@ -192,7 +192,8 @@ Per cambiare modello: `ollama pull <nome>` e poi aggiorna `MODELLO_VISION` in `.
 │   ├── contrast.py            # rapporto di contrasto WCAG tra due colori
 │   ├── extract_palette.py     # colori dominanti di un'immagine
 │   ├── check_contrast_pairs.py# controlla più coppie testo/sfondo insieme
-│   └── ocr.py                 # trova il testo e ne campiona i colori reali
+│   ├── ocr.py                 # trova il testo e ne campiona i colori reali
+│   └── daltonismo.py          # simula i deficit di visione dei colori (e li segnala)
 ├── screens/           # screenshot per l'uso da terminale
 ├── uploads/           # file temporaneo dell'immagine caricata (creato in automatico)
 ├── progetti/          # una sottocartella per progetto: immagine + analisi.json
@@ -225,12 +226,16 @@ Non serve modificare nessun altro file: al prossimo avvio il tool è disponibile
 
 ## L'output: il report
 
-Per ogni screenshot il report unisce due parti:
+Per ogni screenshot il report unisce tre parti:
 
 1. **Valutazione qualitativa** (dal modello): gerarchia visiva, leggibilità, chiarezza
-   della CTA, coerenza e layout, criticità di accessibilità, note.
+   della CTA, criticità di accessibilità, aree da verificare, note.
 2. **Misure oggettive di contrasto** (dai tool): palette dei colori dominanti e una
    tabella con il rapporto WCAG di ogni coppia testo/sfondo e gli esiti AA/AAA.
+3. **Daltonismo** (dal tool `daltonismo.py`): lo screenshot mostrato come lo vedrebbe chi
+   ha un deficit di visione dei colori (deuteranopia/protanopia/tritanopia), più l'elenco
+   dei colori dominanti che rischiano di confondersi. Verifica "l'uso del colore", che il
+   solo contrasto non copre.
 
 Le coppie testo/sfondo arrivano dall'**OCR** (colori reali del testo) quando Tesseract
 è disponibile; altrimenti si ripiega su una stima dalla palette (indicato nel report).

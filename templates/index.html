@@ -120,6 +120,16 @@
     .conf-col{border:1px solid var(--bordo);border-radius:12px;padding:12px}
     .conf-col img{width:100%;border-radius:8px;border:1px solid var(--bordo)}
 
+    /* Daltonismo */
+    .dalt-contenuto{margin-top:12px}
+    .dalt-griglia{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:10px 0}
+    @media (max-width:760px){.dalt-griglia{grid-template-columns:1fr}}
+    .dalt-griglia figure{margin:0}
+    .dalt-griglia img{width:100%;border:1px solid var(--bordo);border-radius:8px;display:block}
+    .dalt-griglia figcaption{text-align:center;font-size:13px;font-weight:600;margin-top:6px}
+    .dalt-griglia figcaption span{font-weight:400;color:var(--grigio);font-size:12px}
+    code{background:var(--sfondo);border:1px solid var(--bordo);border-radius:5px;padding:1px 5px;font-family:ui-monospace,monospace;font-size:13px}
+
     /* Overlay attesa */
     .overlay{position:fixed;inset:0;background:rgba(255,255,255,.88);display:flex;flex-direction:column;
              align-items:center;justify-content:center;gap:12px;z-index:30}
@@ -333,6 +343,24 @@
       document.getElementById('modaleContenuto').innerHTML = html;
       document.getElementById('modale').hidden = false;
     }
+
+    // Daltonismo "a richiesta": il pulsante sta dentro un report iniettato, quindi
+    // usiamo la delega sugli eventi (un solo ascoltatore per tutta la pagina).
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.btn-dalt');
+      if (!btn) return;
+      const contenitore = btn.parentElement.querySelector('.dalt-contenuto');
+      btn.disabled = true;
+      btn.textContent = 'Simulazione in corso…';
+      try {
+        const html = await (await fetch('/daltonismo-sezione/' + btn.dataset.slug)).text();
+        contenitore.innerHTML = html;
+        btn.style.display = 'none';            // dopo il lancio, nascondi il pulsante
+      } catch (err) {
+        contenitore.innerHTML = '<p class="errore">Errore: ' + err + '</p>';
+        btn.disabled = false; btn.textContent = '👁  Simula il daltonismo';
+      }
+    });
 
     // Carica progetti e confronti salvati all'apertura
     caricaProgetti();

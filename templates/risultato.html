@@ -68,5 +68,13 @@
     </table>
   {% else %}<p class="fonte">Nessuna coppia di colori da controllare.</p>{% endif %}
 
+  {% if slug %}
+  <h3 style="margin-top:20px">Daltonismo</h3>
+  <p class="fonte">Funzione extra: guarda come apparirebbe questo schermo a chi ha un
+     deficit di visione dei colori. Lanciala quando vuoi raccontarla.</p>
+  <button class="btn btn-dalt" data-slug="{{ slug }}">👁&nbsp; Simula il daltonismo</button>
+  <div class="dalt-contenuto"></div>
+  {% endif %}
+
   <p class="fonte" style="margin-top:14px">Valutazione di <b>prima passata</b>, non una certificazione WCAG legale: i colori sono stimati dai pixel.</p>
 </div>

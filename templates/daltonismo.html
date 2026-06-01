@@ -1,0 +1,14 @@
+{# daltonismo.html — frammento mostrato quando si lancia la simulazione dal report.
+   Riceve: slug, confondibili. Le immagini sono generate al volo da /daltonismo/<slug>/<tipo>. #}
+<div class="dalt-griglia">
+  <figure><img src="/daltonismo/{{ slug }}/deuteranopia" alt="deuteranopia"><figcaption>Deuteranopia<br><span>rosso-verde (il più comune)</span></figcaption></figure>
+  <figure><img src="/daltonismo/{{ slug }}/protanopia" alt="protanopia"><figcaption>Protanopia<br><span>rosso-verde</span></figcaption></figure>
+  <figure><img src="/daltonismo/{{ slug }}/tritanopia" alt="tritanopia"><figcaption>Tritanopia<br><span>blu-giallo (raro)</span></figcaption></figure>
+</div>
+{% if confondibili %}
+  <p class="nota">⚠️ Colori dominanti che potrebbero <b>confondersi</b> per chi ha deuteranopia:
+    {% for c in confondibili %}<code>{{ c.colore_1 }}</code> ↔ <code>{{ c.colore_2 }}</code>{% if not loop.last %} · {% endif %}{% endfor %}.
+    Non affidarti solo al colore per distinguere gli elementi (aggiungi testo o icone).</p>
+{% else %}
+  <p class="fonte">Nessuna coppia di colori dominanti risulta facilmente confondibile. 👍</p>
+{% endif %}

@@ -14,12 +14,14 @@ Avvio:  python app.py     (poi si apre il browser; per non aprirlo: --no-browser
 import sys
 import threading
 import webbrowser
+from io import BytesIO
 
-from flask import Flask, render_template, request, send_from_directory, jsonify, abort
+from flask import Flask, render_template, request, send_from_directory, send_file, jsonify, abort
 
 import config
 import progetti
 from agent import analizza_screenshot, verifica_modello, scalda_modello, confronta_progetti
+from tools import daltonismo
 
 # Cartella temporanea per il file appena caricato (poi viene copiato nel progetto).
 CARTELLA_UPLOAD = config.RADICE / "uploads"
@@ -55,8 +57,13 @@ def analizza():
     finally:
         temp.unlink(missing_ok=True)                     # ripulisce il file temporaneo
 
-    return render_template("risultato.html", r=risultato, nome=progetto["nome"],
-                           data=progetto["data"], img_url=f"/immagine/{progetto['slug']}")
+    return _rendi_report(risultato, progetto["nome"], progetto["data"], progetto["slug"])
+
+
+def _rendi_report(r: dict, nome: str, data: str, slug: str):
+    """Disegna il report di un progetto (il daltonismo si lancia a parte, su richiesta)."""
+    return render_template("risultato.html", r=r, nome=nome, data=data, slug=slug,
+                           img_url=f"/immagine/{slug}")
 
 
 @app.route("/api/progetti")
@@ -76,8 +83,7 @@ def vedi_progetto(slug):
     p = progetti.carica_progetto(slug)
     if not p:
         abort(404)
-    return render_template("risultato.html", r=p["risultato"], nome=p["nome"],
-                           data=p["data"], img_url=f"/immagine/{slug}")
+    return _rendi_report(p["risultato"], p["nome"], p["data"], slug)
 
 
 @app.route("/confronta", methods=["POST"])
@@ -145,6 +151,28 @@ def immagine(slug):
     if not p:
         abort(404)
     return send_from_directory(progetti.CARTELLA_PROGETTI / slug, p["immagine"])
+
+
+@app.route("/daltonismo/<slug>/<tipo>")
+def daltonismo_immagine(slug, tipo):
+    """Genera al volo l'immagine del progetto simulata per un tipo di daltonismo."""
+    if tipo not in daltonismo.MATRICI or not progetti.carica_progetto(slug):
+        abort(404)
+    immagine_sim = daltonismo.simula(progetti.percorso_immagine(slug), tipo)
+    buffer = BytesIO()
+    immagine_sim.save(buffer, format="PNG")
+    buffer.seek(0)
+    return send_file(buffer, mimetype="image/png")
+
+
+@app.route("/daltonismo-sezione/<slug>")
+def daltonismo_sezione(slug):
+    """Frammento HTML del daltonismo, lanciato A RICHIESTA dal report (non automatico)."""
+    p = progetti.carica_progetto(slug)
+    if not p:
+        abort(404)
+    confondibili = daltonismo.colori_confondibili(p["risultato"].get("palette", []))
+    return render_template("daltonismo.html", slug=slug, confondibili=confondibili)
 
 
 def _nome_sicuro(nome: str) -> str:
