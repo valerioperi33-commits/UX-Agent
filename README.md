@@ -4,8 +4,9 @@
 **valutazione di UX e accessibilità di prima passata** in italiano. Gira **interamente
 in locale**: nessun dato esce dal computer. Interfaccia in **Material Design 3**.
 
-Progetto del corso magistrale **LM91 (UX/UI Design) — LUMSA**, per le materie di
-linguistica italiana, intelligenza artificiale e prompt design.
+Progetto di **Valerio Peri** e **Shirin Qulaghasi** — corso magistrale **LM91 (UX/UI Design),
+LUMSA**, per le materie di linguistica italiana, intelligenza artificiale e prompt design.
+Sviluppato con l'agente AI **Claude Code**, come richiesto dal corso.
 
 ---
 
@@ -359,5 +360,10 @@ si chiude quando chiudi l'app). **Va rifatto su ogni Mac** (il percorso del prog
 ---
 
 ## Crediti
-**UX Agent** — Progetto LM91 (UX/UI Design), LUMSA. Costruito con Python, Ollama, Tesseract,
-Flask e PyWebView; interfaccia in **Material Design 3**.
+
+**UX Agent** — Progetto del corso magistrale **LM91 (UX/UI Design), LUMSA**.
+
+Autori: **Valerio Peri** e **Shirin Qulaghasi**.
+
+Sviluppato con l'assistenza di un agente AI (**Claude Code**), come previsto dal corso.
+Stack tecnico: Python, Ollama, Tesseract, Flask, PyWebView; interfaccia in **Material Design 3**.
