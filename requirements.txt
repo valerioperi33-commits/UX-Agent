@@ -23,6 +23,10 @@ numpy>=1.26.0          # calcoli sui colori (palette dominante, separazione test
 # --- Interfaccia grafica (piccola app web locale) ---
 flask>=3.0             # server web locale per il drag-and-drop e la vista del report
 
+# --- App desktop (finestra nativa) ---
+# Serve solo per "python desktop.py". L'interfaccia nel browser ("python app.py") non ne ha bisogno.
+pywebview>=5.0         # mostra l'interfaccia in una finestra del sistema (su macOS usa pyobjc)
+
 # --- OCR: riconoscimento del testo negli screenshot ---
 # NB: per l'OCR NON serve una libreria Python: chiamiamo direttamente il programma
 # di sistema Tesseract (vedi tools/ocr.py). Va installato a parte con Homebrew:

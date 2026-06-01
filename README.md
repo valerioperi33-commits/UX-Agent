@@ -115,6 +115,17 @@ giudizio qualitativo, palette a colori e tabella dei contrasti con esiti AA/AAA.
 > Terminale compaia **"✅ Modello pronto"** (qualche decina di secondi) prima di trascinare
 > il primo screenshot: da quel momento ogni analisi è veloce.
 
+### Versione "app desktop" (finestra nativa)
+
+Se preferisci una **vera finestra dell'app** invece di una scheda del browser:
+
+- **Da Finder:** doppio click su `avvia_app_desktop.command`.
+- **Da terminale:** `python desktop.py`.
+
+Fa esattamente le stesse cose (è la stessa interfaccia), ma dentro una finestra del sistema.
+Usa la libreria `pywebview` (già in `requirements.txt`). Se su un Mac non partisse, la
+versione nel browser (`python app.py`) resta sempre disponibile come alternativa.
+
 Anche l'interfaccia gira **solo in locale**: nessun dato esce dal computer. Per fermarla,
 premi `CTRL+C` nella finestra del Terminale. (La porta è la **5001**, non la 5000: su
 macOS la 5000 è occupata dal "Ricevitore AirPlay". Si può cambiare con `PORTA` in `.env`.)
@@ -174,8 +185,10 @@ Per cambiare modello: `ollama pull <nome>` e poi aggiorna `MODELLO_VISION` in `.
 ```
 .
 ├── main.py            # avvio DA TERMINALE: trova gli screenshot e lancia l'analisi
-├── app.py             # avvio INTERFACCIA GRAFICA (app web locale): stessa analisi
-├── avvia_interfaccia.command  # doppio click per avviare l'interfaccia senza terminale
+├── app.py             # avvio INTERFACCIA GRAFICA nel browser (app web locale)
+├── desktop.py         # avvio come APP DESKTOP: stessa interfaccia in una finestra nativa
+├── avvia_interfaccia.command   # doppio click → interfaccia nel browser
+├── avvia_app_desktop.command   # doppio click → app in finestra nativa
 ├── agent.py           # orchestrazione: analisi e confronto (parla col modello e usa i tool)
 ├── progetti.py        # salva/rilegge i "progetti" (immagine + report) nella cartella progetti/
 ├── config.py          # legge le impostazioni da .env
