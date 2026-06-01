@@ -1,94 +1,69 @@
 """
-crea_app.py — Crea l'app "UX Agent.app" sulla Scrivania (con icona e nome), da doppio click.
+crea_app.py — Mette sulla Scrivania un avvio comodo di UX Agent, con icona, da doppio click.
 
-Cosa fa:
-  1. prende il logo del progetto (icona.jpg), lo rende quadrato e gli arrotonda gli angoli;
-  2. lo converte nel formato icona di macOS (.icns, con tutte le misure);
-  3. costruisce un vero ".app" che, al doppio click, apre l'interfaccia in finestra nativa.
+NOTA TECNICA (importante): un vero ".app" NON firmato non riesce ad aprirsi se il progetto
+sta sulla Scrivania, perche' macOS protegge quella cartella e non lascia leggere i file
+all'app. Quindi creiamo un launcher ".command" con l'icona di UX Agent: il doppio click lo
+apre passando dal Terminale (che quel permesso ce l'ha gia'), e compare la finestra nativa
+dell'app. Cosi' funziona anche dalla Scrivania.
 
-Va rieseguito SU OGNI MAC (il percorso del progetto cambia da un computer all'altro).
-
-Uso:  python crea_app.py        (oppure doppio click su installa_app.command)
+Va rieseguito su ogni Mac (il percorso del progetto cambia).
+Uso:  python crea_app.py        (oppure doppio click su  installa_app.command)
 """
-import plistlib
-import shutil
-import subprocess
-import tempfile
+import os
 from pathlib import Path
 
+from AppKit import NSImage, NSWorkspace          # API native di macOS (arrivano con pywebview/pyobjc)
 from PIL import Image, ImageDraw
 
 PROGETTO = Path(__file__).parent.resolve()
-NOME_APP = "UX Agent"
-SORGENTE_ICONA = PROGETTO / "icona.jpg"          # il logo (jpg o png)
+SORGENTE_ICONA = PROGETTO / "icona.jpg"
 DESKTOP = Path.home() / "Desktop"
+LAUNCHER = DESKTOP / "Avvia UX Agent.command"
 
 
-def _icona_arrotondata(percorso: Path, lato: int = 1024) -> Image.Image:
-    """Carica il logo, lo rende quadrato e gli arrotonda gli angoli (stile macOS)."""
+def _icona_arrotondata(percorso: Path, lato: int = 512) -> Image.Image:
+    """Logo reso quadrato e con angoli arrotondati (stile icona macOS)."""
     img = Image.open(percorso).convert("RGBA").resize((lato, lato), Image.LANCZOS)
-    raggio = int(lato * 0.2237)                  # curvatura tipica delle icone macOS
+    raggio = int(lato * 0.2237)
     maschera = Image.new("L", (lato, lato), 0)
     ImageDraw.Draw(maschera).rounded_rectangle([0, 0, lato, lato], radius=raggio, fill=255)
     img.putalpha(maschera)
     return img
 
 
-def _crea_icns(icona: Image.Image, destinazione: Path):
-    """Genera il file .icns con tutte le misure richieste da macOS (tramite iconutil)."""
-    with tempfile.TemporaryDirectory() as tmp:
-        iconset = Path(tmp) / "icona.iconset"
-        iconset.mkdir()
-        for dim in (16, 32, 128, 256, 512):
-            icona.resize((dim, dim), Image.LANCZOS).save(iconset / f"icon_{dim}x{dim}.png")
-            doppio = dim * 2
-            icona.resize((doppio, doppio), Image.LANCZOS).save(iconset / f"icon_{dim}x{dim}@2x.png")
-        subprocess.run(["iconutil", "-c", "icns", str(iconset), "-o", str(destinazione)], check=True)
+def _imposta_icona(file_path: Path, icona: Image.Image):
+    """Applica un'icona personalizzata a un file (API native, niente strumenti esterni)."""
+    tmp = PROGETTO / ".icona_tmp.png"             # temporaneo dentro il progetto (accessibile)
+    icona.save(tmp)
+    nsimg = NSImage.alloc().initWithContentsOfFile_(str(tmp))
+    NSWorkspace.sharedWorkspace().setIcon_forFile_options_(nsimg, str(file_path), 0)
+    tmp.unlink(missing_ok=True)
 
 
 def crea_app():
     if not SORGENTE_ICONA.exists():
         raise SystemExit(f"Manca l'icona: metti '{SORGENTE_ICONA.name}' nella cartella del progetto.")
 
-    app = DESKTOP / f"{NOME_APP}.app"
-    if app.exists():
-        shutil.rmtree(app)                       # rifa' da capo se esiste gia'
-    contents = app / "Contents"
-    (contents / "MacOS").mkdir(parents=True)
-    (contents / "Resources").mkdir(parents=True)
-
-    # 1) Icona
-    _crea_icns(_icona_arrotondata(SORGENTE_ICONA), contents / "Resources" / "icona.icns")
-
-    # 2) Eseguibile: uno script che apre l'app in finestra nativa (usa il python del venv)
-    avvia = contents / "MacOS" / "avvia"
-    avvia.write_text(
+    # 1) Il launcher sulla Scrivania: ha "incollato" dentro il percorso del progetto, quindi
+    #    funziona ovunque lo si clicchi (passa dal Terminale, che ha i permessi).
+    LAUNCHER.write_text(
         "#!/bin/bash\n"
         f'cd "{PROGETTO}" || exit 1\n'
-        # Registriamo cosa succede in un log: se l'app non parte, l'errore e' qui.
-        f'exec "{PROGETTO}/venv/bin/python" desktop.py >> "{PROGETTO}/desktop_app.log" 2>&1\n'
+        "source venv/bin/activate\n"
+        "python desktop.py\n"
     )
-    avvia.chmod(0o755)
+    LAUNCHER.chmod(0o755)
 
-    # 3) Info.plist (nome visualizzato, icona, ecc.)
-    info = {
-        "CFBundleName": NOME_APP,
-        "CFBundleDisplayName": NOME_APP,
-        "CFBundleExecutable": "avvia",
-        "CFBundleIconFile": "icona",
-        "CFBundleIdentifier": "it.lumsa.lm91.uxagent",
-        "CFBundlePackageType": "APPL",
-        "CFBundleVersion": "1.0",
-        "CFBundleShortVersionString": "1.0",
-        "NSHighResolutionCapable": True,
-        "LSMinimumSystemVersion": "11.0",
-    }
-    with open(contents / "Info.plist", "wb") as f:
-        plistlib.dump(info, f)
+    # 2) Icona di UX Agent sul launcher (e anche sul gemello dentro la cartella del progetto)
+    icona = _icona_arrotondata(SORGENTE_ICONA)
+    _imposta_icona(LAUNCHER, icona)
+    interno = PROGETTO / "avvia_app_desktop.command"
+    if interno.exists():
+        _imposta_icona(interno, icona)
 
-    subprocess.run(["touch", str(app)], check=False)     # invita il Finder ad aggiornare l'icona
-    print(f"✅ Creata: {app}")
-    print("   La trovi sulla Scrivania. Se l'icona non si aggiorna subito, attendi un attimo.")
+    print(f"✅ Creato: {LAUNCHER}")
+    print("   Doppio click su 'Avvia UX Agent' sulla Scrivania → si apre la finestra dell'app.")
 
 
 if __name__ == "__main__":

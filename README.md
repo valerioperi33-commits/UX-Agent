@@ -187,8 +187,8 @@ Per cambiare modello: `ollama pull <nome>` e poi aggiorna `MODELLO_VISION` in `.
 ├── main.py            # avvio DA TERMINALE: trova gli screenshot e lancia l'analisi
 ├── app.py             # avvio INTERFACCIA GRAFICA nel browser (app web locale)
 ├── desktop.py         # avvio come APP DESKTOP: stessa interfaccia in una finestra nativa
-├── crea_app.py        # crea "UX Agent.app" sulla Scrivania (icona + nome)
-├── icona.jpg          # logo di UX Agent (diventa l'icona dell'app)
+├── crea_app.py        # mette "Avvia UX Agent" (launcher con icona) sulla Scrivania
+├── icona.jpg          # logo di UX Agent (diventa l'icona del launcher)
 ├── avvia_interfaccia.command   # doppio click → interfaccia nel browser
 ├── avvia_app_desktop.command   # doppio click → app in finestra nativa
 ├── installa_app.command        # doppio click → crea l'app sulla Scrivania
@@ -296,26 +296,26 @@ python main.py screens/esempio_landing.png
 
 ---
 
-## App sulla Scrivania (UX Agent.app)
+## Icona sulla Scrivania ("Avvia UX Agent")
 
-Per avere **UX Agent** come vera app con icona sulla Scrivania:
+Per avere un avvio comodo con icona sulla Scrivania:
 
 ```bash
 source venv/bin/activate
 python crea_app.py        # oppure doppio click su  installa_app.command
 ```
 
-Crea `UX Agent.app` sulla Scrivania (icona presa da `icona.jpg`). Doppio click → si apre la
-finestra dell'app. **Va rifatto su ogni Mac** (il percorso del progetto cambia). Se macOS
-dice "sviluppatore non identificato": tasto destro sull'app → *Apri* → *Apri*.
+Mette sulla Scrivania **"Avvia UX Agent"** con l'icona del logo: doppio click → si apre la
+**finestra nativa** dell'app (compare anche una finestrella di Terminale dietro: è normale,
+si chiude quando chiudi l'app). **Va rifatto su ogni Mac** (il percorso del progetto viene
+"incollato" dentro il launcher).
 
-> ⚠️ **macOS e la cartella Scrivania:** se il progetto sta sulla **Scrivania** (o in Documenti/
-> Download), l'app col **doppio click** non parte: macOS non lascia leggere quelle cartelle alle
-> app non firmate. Due strade: **(a)** dai a "UX Agent" l'**Accesso completo al disco**
-> (Impostazioni di sistema → Privacy e sicurezza → Accesso completo al disco → "+" → scegli l'app);
-> **oppure (b)** tieni il progetto in una cartella non protetta (es. la Home `~/`).
-> In ogni caso **Terminale e browser** (`python main.py` / `python app.py`) funzionano **sempre**,
-> ovunque sia la cartella — ed è il modo consigliato per la dimostrazione.
+> ℹ️ **Perché un launcher `.command` e non un vero `.app`?** Un `.app` non firmato **non**
+> riesce ad aprirsi se il progetto sta sulla **Scrivania** (o in Documenti/Download): macOS
+> protegge quelle cartelle e non lascia leggere i file all'app — e nemmeno l'"Accesso completo
+> al disco" basta (il permesso finisce sul Python interno, non sull'app). Il `.command` invece
+> passa dal **Terminale**, che quel permesso ce l'ha già → funziona. Stessa app, solo un avvio
+> diverso. Restano sempre validi anche `python app.py` (browser) e `python main.py` (terminale).
 
 ---
 
