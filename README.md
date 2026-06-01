@@ -47,7 +47,7 @@ Queste istruzioni servono anche per far girare il progetto **sul secondo Mac da 
 
 ### 1) Ollama e il modello vision
 Installa Ollama da <https://ollama.com> (oppure `brew install ollama`), poi scarica il
-modello **veloce** (predefinito, ottimo per la dimostrazione):
+modello **veloce** (predefinito):
 
 ```bash
 ollama pull qwen2.5vl:3b
@@ -111,7 +111,7 @@ Il browser si apre da solo su <http://127.0.0.1:5001>: **trascina uno screenshot
 riquadro e in circa **6–8 secondi** compare il report con anteprima dell'immagine,
 giudizio qualitativo, palette a colori e tabella dei contrasti con esiti AA/AAA.
 
-> 💡 **Per la dimostrazione:** all'avvio l'app "pre-riscalda" il modello. Aspetta che nel
+> 💡 **Suggerimento:** all'avvio l'app "pre-riscalda" il modello. Aspetta che nel
 > Terminale compaia **"✅ Modello pronto"** (qualche decina di secondi) prima di trascinare
 > il primo screenshot: da quel momento ogni analisi è veloce.
 
@@ -161,7 +161,7 @@ configurato per essere **veloce**: con il modello caldo, un'analisi richiede cir
 
 | Obiettivo | `MODELLO_VISION` | Tempo indicativo* |
 |---|---|---|
-| **Veloce (demo)** — predefinito | `qwen2.5vl:3b` | ~6–8 s |
+| **Veloce** — predefinito | `qwen2.5vl:3b` | ~6–8 s |
 | **Più qualità, più lento** | `qwen2.5vl:7b` | ~15–25 s |
 | **8 GB di RAM** | `qwen2.5vl:3b` (consigliato) | un po' più lento |
 
@@ -273,9 +273,9 @@ Da dichiarare con chiarezza, perché fa parte del rigore del progetto:
 
 ---
 
-## Avvio da terminale (utile per l'esame)
+## Avvio da terminale
 
-Se vi chiedono di avviarlo **solo da terminale**, senza app né browser:
+Per avviare l'agente **solo da terminale**, senza app né browser:
 
 ```bash
 cd ~/Desktop/"Progetto Benedetti LM91"   # entra nella cartella del progetto

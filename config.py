@@ -17,7 +17,7 @@ load_dotenv()
 RADICE = Path(__file__).parent
 
 # Nome del modello vision da usare via Ollama (vedi .env).
-# Default veloce per la dimostrazione; per piu' qualita' si puo' usare qwen2.5vl:7b.
+# Default veloce; per piu' qualita' si puo' usare qwen2.5vl:7b.
 MODELLO_VISION = os.getenv("MODELLO_VISION", "qwen2.5vl:3b")
 
 # Cartella degli screenshot e cartella dei report (percorsi assoluti).
@@ -30,7 +30,7 @@ OCR_LINGUA = os.getenv("OCR_LINGUA", "ita+eng")
 # Indirizzo del server Ollama: vuoto/assente = default locale (127.0.0.1:11434).
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "").strip() or None
 
-# --- Impostazioni per la VELOCITA' (utili per la dimostrazione all'esame) ---
+# --- Impostazioni per la VELOCITA' ---
 # Lato massimo (in pixel) a cui rimpicciolire l'immagine PRIMA di darla al modello:
 # meno pixel = il modello "vede" prima = analisi piu' veloce. 0 = non ridimensionare.
 LATO_MAX_MODELLO = int(os.getenv("LATO_MAX_MODELLO", "512"))

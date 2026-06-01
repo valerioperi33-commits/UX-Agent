@@ -128,8 +128,8 @@ def _carica_json_robusto(testo: str) -> dict:
 def scalda_modello() -> None:
     """
     Carica il modello in memoria con una richiesta minima ("pre-riscaldamento"),
-    cosi' la PRIMA analisi vera parte gia' calda. Utile per le dimostrazioni:
-    si lancia all'avvio dell'interfaccia (vedi app.py).
+    cosi' la PRIMA analisi vera parte gia' calda. Si lancia all'avvio
+    dell'interfaccia (vedi app.py).
     """
     try:
         # Riscaldiamo con una chiamata IDENTICA a quella vera (stesso prompt, immagine
